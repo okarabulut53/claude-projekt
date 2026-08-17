@@ -66,6 +66,16 @@ of sync with how Next.js actually routes requests). Concretely:
 - When adding a new protected route or action, follow this pattern rather than adding a path to a
   matcher list.
 
+## Page components have names; route files don't
+
+Next.js requires the route file itself to be named exactly `page.tsx` — that's not negotiable, so
+`app/page.tsx` and `app/(main)/dashboard/page.tsx` can't be renamed. Instead, the two top-level
+pages have their actual content in a named component that the route file just re-exports:
+`app/page.tsx` → `components/pages/Hauptseite.tsx`, `app/(main)/dashboard/page.tsx` →
+`components/pages/Dashboardsite.tsx`. Keep following this split for any other page the user asks
+to have a recognizable name — add the named component under `components/pages/`, keep the route's
+`page.tsx` as a thin default-export wrapper.
+
 ## Route groups and the onboarding gate
 
 - `app/(main)/` — the authenticated app shell (`dashboard`, `portfolio`, `search`,
@@ -129,4 +139,18 @@ Design tokens (brand navy/teal, risk-level colors) are defined once in `app/glob
 Tailwind v4's `@theme inline`, then used as utility classes (`bg-brand-teal`, `text-risk-high`,
 etc.) — extend the palette there rather than hardcoding hex values in components. Charts
 (`components/charts/`) are hand-rolled inline SVG, not a charting library — there was a deliberate
-choice not to add a dependency for this.
+choice not to add a dependency for this. Illustrations follow the same no-dependency,
+no-external-image approach: `components/icons/Icons.tsx` is a small hand-drawn stroke-icon set
+(24x24 viewBox, `stroke="currentColor"`, sized/colored via the `IconTile` wrapper in
+`components/ui/IconTile.tsx`), and `components/illustrations/HeroVisual.tsx` is the decorative
+blob-shape + floating-chip wrapper used behind the landing page's hero card — both exist so the
+landing page doesn't depend on hotlinked or licensed stock imagery.
+
+**Z-index gotcha (already hit once, don't repeat it):** a `position: relative` wrapper with no
+`z-index` of its own does **not** establish a new stacking context, so a child given a *negative*
+z-index (e.g. `-z-10` for a decorative background shape) can end up painted behind unrelated
+sibling sections instead of just behind its intended sibling — it becomes invisible. `HeroVisual`
+avoids this by never using negative z-index: the decorative blob is plain `position: absolute`
+with no z-index (default stacking, painted in DOM order), and only the foreground content gets a
+positive `z-10`/`z-20`. Follow that pattern — DOM order + non-negative z-index — for any future
+decorative/background element rather than reaching for `-z-*`.

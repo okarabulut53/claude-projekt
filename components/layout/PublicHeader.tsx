@@ -38,7 +38,7 @@ export function PublicHeader() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible) setActiveSection(visible.target.id);
       },
-      { rootMargin: "-45% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
+      { rootMargin: "-96px 0px -55% 0px", threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
     );
 
     elements.forEach((el) => observer.observe(el));

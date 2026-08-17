@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { Show, SignUpButton } from "@clerk/nextjs";
 import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PromoBanner } from "@/components/layout/PromoBanner";
 import { Footer } from "@/components/layout/Footer";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { RiskBadge, ScoreBadge } from "@/components/ui/Badge";
 import { IconTile } from "@/components/ui/IconTile";
+import { GradientDivider } from "@/components/ui/GradientDivider";
 import { HeroVisual } from "@/components/illustrations/HeroVisual";
+import { GradientChartIllustration } from "@/components/illustrations/GradientChartIllustration";
 import {
   BellIcon,
   ChartLineIcon,
@@ -17,6 +20,13 @@ import {
   ShieldCheckIcon,
   SlidersIcon,
 } from "@/components/icons/Icons";
+
+const stats = [
+  { value: "3", label: "Anlageklassen: Aktien, ETFs, Krypto" },
+  { value: "Täglich", label: "Neu berechnete Investment-Ideen" },
+  { value: "3", label: "Risikoprofile für passende Vorschläge" },
+  { value: "0", label: "Automatische Order-Ausführung" },
+];
 
 const features = [
   {
@@ -84,6 +94,7 @@ const riskProfiles = [
 export function Hauptseite() {
   return (
     <div className="flex min-h-screen flex-col">
+      <PromoBanner />
       <PublicHeader />
 
       <main>
@@ -95,7 +106,11 @@ export function Hauptseite() {
                 KI-gestützte Investmentanalyse
               </span>
               <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-brand-navy md:text-5xl">
-                Investmentchancen erkennen.
+                Investmentchancen{" "}
+                <span className="inline-block rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 px-3 py-0.5 text-white">
+                  erkennen
+                </span>
+                .
                 <br />
                 Entscheiden bleibt bei dir.
               </h1>
@@ -162,6 +177,20 @@ export function Hauptseite() {
           </Container>
         </section>
 
+        <GradientDivider />
+
+        {/* Stats */}
+        <section className="border-b border-brand-border py-10">
+          <Container className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center md:text-left">
+                <div className="text-2xl font-bold text-brand-navy md:text-3xl">{stat.value}</div>
+                <div className="mt-1 text-xs leading-snug text-foreground/60">{stat.label}</div>
+              </div>
+            ))}
+          </Container>
+        </section>
+
         {/* Funktionen */}
         <section id="funktionen" className="py-24">
           <Container>
@@ -186,6 +215,40 @@ export function Hauptseite() {
                   </p>
                 </Card>
               ))}
+            </div>
+          </Container>
+        </section>
+
+        {/* Score-Trend */}
+        <section className="py-24">
+          <Container className="grid items-center gap-12 md:grid-cols-2">
+            <GradientChartIllustration />
+            <div>
+              <span className="inline-flex items-center rounded-full bg-fuchsia-50 px-4 py-1.5 text-xs font-semibold text-fuchsia-600">
+                Entwicklung statt Momentaufnahme
+              </span>
+              <h2 className="mt-6 text-3xl font-bold tracking-tight text-brand-navy">
+                Der Score wird börsentäglich neu berechnet
+              </h2>
+              <p className="mt-4 text-foreground/70">
+                Statt eines einzelnen Werts siehst du, wie sich die Einschätzung zu einem Asset
+                über Tage und Wochen entwickelt — verbessert sich das Chancen/Risiko-Verhältnis
+                oder verschlechtert es sich? So erkennst du Trends, bevor du dich entscheidest.
+              </p>
+              <ul className="mt-6 space-y-3 text-sm text-foreground/70">
+                <li className="flex gap-3">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-orange-500" />
+                  Score-Historie je Asset, nicht nur der aktuelle Stand
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-orange-500" />
+                  Auffällige Veränderungen werden im Reasoning benannt
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-orange-500" />
+                  Jederzeit nachvollziehbar auf der Instrumenten-Detailseite
+                </li>
+              </ul>
             </div>
           </Container>
         </section>
@@ -326,6 +389,8 @@ export function Hauptseite() {
             </div>
           </Container>
         </section>
+
+        <GradientDivider />
 
         {/* CTA */}
         <section className="py-24">

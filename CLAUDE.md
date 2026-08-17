@@ -154,3 +154,16 @@ avoids this by never using negative z-index: the decorative blob is plain `posit
 with no z-index (default stacking, painted in DOM order), and only the foreground content gets a
 positive `z-10`/`z-20`. Follow that pattern — DOM order + non-negative z-index — for any future
 decorative/background element rather than reaching for `-z-*`.
+
+**`className` overrides go through `cn()` (`lib/cn.ts`, wraps `tailwind-merge`), never raw string
+concatenation.** Components that accept a `className` prop and merge it with their own base
+classes (`Card`, `Button`/`ButtonLink`, `Container`, `DisclaimerNote`) all do
+`cn(baseClasses, className)`. This was added after a real bug: `<Card className="bg-brand-navy
+text-white">` in the landing page's closing CTA silently lost to `Card`'s own `bg-white` — with
+plain template-string concatenation, Tailwind resolves conflicting utilities by each class's
+position in the *generated stylesheet*, not by where it appears in the `className` string, and a
+custom `@theme` color like `bg-brand-navy` isn't guaranteed to sort after a core color like
+`bg-white`. It rendered as an invisible white-on-white card with no build or lint error. `cn()`
+resolves same-property conflicts deterministically (last one wins) regardless of Tailwind's
+internal ordering. Any new component with a base-classes-plus-`className` pattern should use it
+too.

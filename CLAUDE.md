@@ -106,6 +106,15 @@ Two separate data sources exist and shouldn't be confused:
   `supabase/schema.sql` and must be applied manually via the Supabase SQL editor — there's no
   migration tooling. `getSupabaseAdmin()` uses the service-role key and is server-only; never
   import `lib/supabase.ts` from a Client Component.
+- **`lib/mock/user-store.ts`** is a third, transitional piece: an in-memory fallback for
+  `app_users`/`portfolio_positions` used automatically whenever `SUPABASE_URL` /
+  `SUPABASE_SERVICE_ROLE_KEY` are unset (`isSupabaseConfigured()` in `lib/supabase.ts` gates it).
+  Every function in `lib/db.ts` checks this first and delegates to the mock store instead of
+  throwing, so the full authenticated flow (onboarding → dashboard → portfolio → chat) works
+  before Supabase is ever configured — data just doesn't survive a dev-server restart. Once real
+  Supabase credentials are added to `.env.local`, `lib/db.ts` switches to Postgres automatically;
+  no code change needed. Don't add a third persistence path — extend `lib/db.ts`'s existing
+  if/else instead.
 - Portfolio "current price" is looked up live from `lib/mock/instruments.ts` by symbol
   (`lib/db.ts`'s `getPortfolioPositions`), not stored — so a position's gain/loss always reflects
   the mock market data's current price, not a stale snapshot.

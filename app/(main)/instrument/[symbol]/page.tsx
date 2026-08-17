@@ -21,7 +21,8 @@ export default async function InstrumentDetailPage({
 
   const opportunity = getOpportunityForSymbol(symbol);
   const news = getNewsForSymbols([instrument.symbol]);
-  const positive = instrument.changePercent1d >= 0;
+  const chartHistory = instrument.history.slice(-30);
+  const chartPositive = chartHistory[chartHistory.length - 1].price >= chartHistory[0].price;
 
   return (
     <div className="space-y-8">
@@ -53,8 +54,8 @@ export default async function InstrumentDetailPage({
           <span className="text-foreground/70">Volatilität: {instrument.volatility}</span>
         </div>
         <LineChart
-          data={instrument.history}
-          positive={positive}
+          data={chartHistory}
+          positive={chartPositive}
           currencyLabel={instrument.currency}
         />
       </Card>

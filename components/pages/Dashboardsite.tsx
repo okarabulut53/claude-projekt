@@ -1,9 +1,11 @@
 import { requireAppUser } from "@/lib/current-user";
+import { getPortfolioPositions } from "@/lib/db";
 import { getMarketIndices } from "@/lib/mock/market";
 import { mockNews } from "@/lib/mock/news";
 import { getOpportunitiesForRiskProfile } from "@/lib/mock/opportunities";
 import { MarketOverview } from "@/components/dashboard/MarketOverview";
 import { NewsFeed } from "@/components/dashboard/NewsFeed";
+import { PortfolioSnapshot } from "@/components/dashboard/PortfolioSnapshot";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
 import { RiskBadge } from "@/components/ui/Badge";
 import { DisclaimerNote } from "@/components/ui/DisclaimerNote";
@@ -12,8 +14,12 @@ export async function Dashboardsite() {
   const appUser = await requireAppUser();
   const riskProfile = appUser.riskProfile!;
 
-  const indices = getMarketIndices();
+  const [positions, indices] = await Promise.all([
+    getPortfolioPositions(appUser.id),
+    Promise.resolve(getMarketIndices()),
+  ]);
   const opportunities = getOpportunitiesForRiskProfile(riskProfile);
+  const portfolioSymbols = positions.map((p) => p.symbol);
 
   return (
     <div className="space-y-8">
@@ -29,6 +35,8 @@ export async function Dashboardsite() {
           <RiskBadge level={riskProfile} />
         </div>
       </div>
+
+      <PortfolioSnapshot positions={positions} />
 
       <MarketOverview indices={indices} />
 
@@ -48,7 +56,7 @@ export async function Dashboardsite() {
         </div>
       </div>
 
-      <NewsFeed news={mockNews} />
+      <NewsFeed news={mockNews} relevantSymbols={portfolioSymbols} />
 
       <DisclaimerNote />
     </div>

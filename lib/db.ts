@@ -1,6 +1,16 @@
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { AppUser, PortfolioPosition, RiskProfile } from "@/lib/types";
 import { getInstrument } from "@/lib/mock/instruments";
+import {
+  mockAddPortfolioPosition,
+  mockGetOrCreateAppUser,
+  mockGetPortfolioPositions,
+  mockMarkOnboardingCompleted,
+  mockRemovePortfolioPosition,
+  mockSetDepotConnected,
+  mockUpdateRiskProfile,
+  mockUpdateWhatsappNumber,
+} from "@/lib/mock/user-store";
 
 interface AppUserRow {
   id: string;
@@ -37,6 +47,8 @@ function mapAppUser(row: AppUserRow): AppUser {
 }
 
 export async function getOrCreateAppUser(userId: string, email: string | null): Promise<AppUser> {
+  if (!isSupabaseConfigured()) return mockGetOrCreateAppUser(userId, email);
+
   const supabase = getSupabaseAdmin();
 
   const { data: existing, error: selectError } = await supabase
@@ -59,6 +71,8 @@ export async function getOrCreateAppUser(userId: string, email: string | null): 
 }
 
 export async function updateRiskProfile(userId: string, riskProfile: RiskProfile) {
+  if (!isSupabaseConfigured()) return mockUpdateRiskProfile(userId, riskProfile);
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("app_users")
@@ -68,6 +82,8 @@ export async function updateRiskProfile(userId: string, riskProfile: RiskProfile
 }
 
 export async function updateWhatsappNumber(userId: string, whatsappNumber: string | null) {
+  if (!isSupabaseConfigured()) return mockUpdateWhatsappNumber(userId, whatsappNumber);
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("app_users")
@@ -77,6 +93,8 @@ export async function updateWhatsappNumber(userId: string, whatsappNumber: strin
 }
 
 export async function setDepotConnected(userId: string, connected: boolean) {
+  if (!isSupabaseConfigured()) return mockSetDepotConnected(userId, connected);
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("app_users")
@@ -86,6 +104,8 @@ export async function setDepotConnected(userId: string, connected: boolean) {
 }
 
 export async function markOnboardingCompleted(userId: string) {
+  if (!isSupabaseConfigured()) return mockMarkOnboardingCompleted(userId);
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("app_users")
@@ -96,6 +116,8 @@ export async function markOnboardingCompleted(userId: string) {
 }
 
 export async function getPortfolioPositions(userId: string): Promise<PortfolioPosition[]> {
+  if (!isSupabaseConfigured()) return mockGetPortfolioPositions(userId);
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("portfolio_positions")
@@ -130,6 +152,8 @@ export async function addPortfolioPosition(params: {
   quantity: number;
   avgPrice: number;
 }) {
+  if (!isSupabaseConfigured()) return mockAddPortfolioPosition(params);
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.from("portfolio_positions").insert({
     user_id: params.userId,
@@ -144,6 +168,8 @@ export async function addPortfolioPosition(params: {
 }
 
 export async function removePortfolioPosition(userId: string, positionId: string) {
+  if (!isSupabaseConfigured()) return mockRemovePortfolioPosition(userId, positionId);
+
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("portfolio_positions")

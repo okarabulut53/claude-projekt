@@ -3,6 +3,10 @@ import { Database } from "@/lib/database.types";
 
 let client: SupabaseClient<Database> | null = null;
 
+export function isSupabaseConfigured() {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 export function getSupabaseAdmin() {
   if (client) return client;
 

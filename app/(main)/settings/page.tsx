@@ -17,14 +17,14 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-navy">Einstellungen</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Einstellungen</h1>
         <p className="mt-1 text-sm text-foreground/60">
           Verwalte dein Risikoprofil sowie deine Benachrichtigungs- und Depot-Einstellungen.
         </p>
       </div>
 
       <Card>
-        <h2 className="text-base font-semibold text-brand-navy">Risikoprofil</h2>
+        <h2 className="text-base font-semibold text-foreground">Risikoprofil</h2>
         <p className="mt-1 text-sm text-foreground/60">
           Aktuell: <RiskBadge level={appUser.riskProfile ?? "low"} />
         </p>
@@ -45,7 +45,7 @@ export default async function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-brand-navy">WhatsApp-Benachrichtigungen</h2>
+        <h2 className="text-base font-semibold text-foreground">WhatsApp-Benachrichtigungen</h2>
         <p className="mt-1 text-sm text-foreground/60">
           {appUser.whatsappNumber
             ? `Hinterlegt: ${appUser.whatsappNumber}`
@@ -64,7 +64,7 @@ export default async function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-brand-navy">Depot-Anbindung</h2>
+        <h2 className="text-base font-semibold text-foreground">Depot-Anbindung</h2>
         <p className="mt-1 text-sm leading-relaxed text-foreground/60">
           {appUser.depotConnected
             ? "Dein Depot ist verbunden (read-only)."

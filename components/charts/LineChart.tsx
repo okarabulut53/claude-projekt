@@ -67,7 +67,7 @@ export function LineChart({
       </svg>
       {active && (
         <div
-          className="pointer-events-none absolute top-0 rounded-lg border border-brand-border bg-white px-3 py-1.5 text-xs shadow-md"
+          className="pointer-events-none absolute top-0 rounded-lg border border-brand-border bg-surface px-3 py-1.5 text-xs shadow-md"
           style={{
             left: `${Math.min(Math.max((active.x / width) * 100, 10), 90)}%`,
             transform: "translate(-50%, -110%)",

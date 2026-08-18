@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const sectionLinks = [
   { id: "funktionen", label: "Funktionen" },
@@ -14,7 +15,7 @@ const sectionLinks = [
 ];
 
 const linkBase = "text-sm font-medium transition-colors";
-const linkInactive = "text-foreground/70 hover:text-brand-navy";
+const linkInactive = "text-foreground/70 hover:text-foreground";
 const linkActive = "text-brand-teal";
 
 export function PublicHeader() {
@@ -48,9 +49,9 @@ export function PublicHeader() {
   const isRechtlichesActive = pathname === "/rechtliches";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-brand-border bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-brand-border bg-surface/90 backdrop-blur">
       <Container className="flex h-16 items-center justify-between">
-        <Link href="/" className="text-lg font-bold tracking-tight text-brand-navy">
+        <Link href="/" className="text-lg font-bold tracking-tight text-foreground">
           finara
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
@@ -76,9 +77,10 @@ export function PublicHeader() {
           </Link>
         </nav>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Show when="signed-out">
             <SignInButton>
-              <button className="text-sm font-semibold text-brand-navy hover:opacity-70">
+              <button className="text-sm font-semibold text-foreground hover:opacity-70">
                 Anmelden
               </button>
             </SignInButton>
@@ -89,8 +91,8 @@ export function PublicHeader() {
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <ButtonLink href="/dashboard" variant="ghost">
-              Zum Dashboard
+            <ButtonLink href="/finaraai" variant="ghost">
+              Zu FinaraAI
             </ButtonLink>
             <UserButton />
           </Show>

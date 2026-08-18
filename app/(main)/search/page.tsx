@@ -16,7 +16,7 @@ export default async function SearchPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-navy">Suche</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Suche</h1>
         <p className="mt-1 text-sm text-foreground/60">
           {query ? (
             <>
@@ -34,10 +34,10 @@ export default async function SearchPage({
             <Link
               key={instrument.symbol}
               href={`/instrument/${instrument.symbol}`}
-              className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-brand-surface"
+              className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-surface-hover"
             >
               <div>
-                <div className="text-sm font-semibold text-brand-navy">{instrument.name}</div>
+                <div className="text-sm font-semibold text-foreground">{instrument.name}</div>
                 <div className="mt-1 flex items-center gap-2 text-xs text-foreground/50">
                   <span>
                     {instrument.symbol} · {instrument.assetClass.toUpperCase()}
@@ -46,7 +46,7 @@ export default async function SearchPage({
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-semibold text-brand-navy">
+                <div className="text-sm font-semibold text-foreground">
                   {formatCurrency(instrument.price, instrument.currency)}
                 </div>
                 <ChangeBadge value={instrument.changePercent1d} />

@@ -15,7 +15,7 @@ export default async function PortfolioPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-navy">Portfolio</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Portfolio</h1>
         <p className="mt-1 text-sm text-foreground/60">
           {appUser.depotConnected
             ? "Depot verbunden — Positionen werden automatisch synchronisiert."
@@ -26,14 +26,14 @@ export default async function PortfolioPage() {
       {positions.length > 0 && <AllocationSummary analysis={analysis} />}
 
       <Card>
-        <h2 className="text-base font-semibold text-brand-navy">Positionen</h2>
+        <h2 className="text-base font-semibold text-foreground">Positionen</h2>
         <div className="mt-4">
           <PositionsTable positions={positions} />
         </div>
       </Card>
 
       <Card>
-        <h2 className="text-base font-semibold text-brand-navy">Position manuell hinzufügen</h2>
+        <h2 className="text-base font-semibold text-foreground">Position manuell hinzufügen</h2>
         <p className="mt-1 text-sm text-foreground/60">
           Kurse für hinterlegte Symbole aus unserer Instrumenten-Liste werden automatisch
           aktualisiert, sonst wird der Einstandspreis als aktueller Preis angenommen.

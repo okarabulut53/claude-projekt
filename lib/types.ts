@@ -80,3 +80,35 @@ export interface AppUser {
   onboardingCompletedAt: string | null;
   createdAt: string;
 }
+
+export interface WatchlistItem {
+  id: string;
+  userId: string;
+  symbol: string;
+  assetClass: AssetClass;
+  createdAt: string;
+}
+
+export interface ChatFolder {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface ChatThread {
+  id: string;
+  userId: string;
+  folderId: string | null;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  threadId: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+}

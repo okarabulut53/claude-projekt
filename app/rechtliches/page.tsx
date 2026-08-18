@@ -9,12 +9,12 @@ export default function RechtlichesPage() {
       <PublicHeader />
       <main className="py-16">
         <Container className="max-w-3xl">
-          <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Rechtliche Hinweise
           </h1>
 
           <Card className="mt-8 border-2 border-brand-teal">
-            <h2 className="text-lg font-semibold text-brand-navy">Wichtiger Hinweis</h2>
+            <h2 className="text-lg font-semibold text-foreground">Wichtiger Hinweis</h2>
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
               Finara ist eine Analyseplattform und erbringt keine Anlageberatung, keine
               Finanzportfolioverwaltung und keine Vermittlung von Finanzinstrumenten im Sinne des
@@ -39,7 +39,7 @@ export default function RechtlichesPage() {
           </Card>
 
           <section id="datenschutz" className="mt-12">
-            <h2 className="text-xl font-semibold text-brand-navy">Datenschutz</h2>
+            <h2 className="text-xl font-semibold text-foreground">Datenschutz</h2>
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
               Platzhalter — hier folgt die vollständige Datenschutzerklärung, sobald Umfang der
               Datenverarbeitung (u. a. Depot-Anbindung, WhatsApp-Versand, KI-Analyse) final
@@ -48,7 +48,7 @@ export default function RechtlichesPage() {
           </section>
 
           <section id="impressum" className="mt-12 pb-16">
-            <h2 className="text-xl font-semibold text-brand-navy">Impressum</h2>
+            <h2 className="text-xl font-semibold text-foreground">Impressum</h2>
             <p className="mt-3 text-sm leading-relaxed text-foreground/70">
               Platzhalter — Anbieterkennzeichnung gemäß § 5 TMG / § 18 MStV wird hier ergänzt.
             </p>

@@ -14,7 +14,7 @@ export function OpportunityCard({ opportunity }: { opportunity: InvestmentOpport
             <div className="text-xs font-medium text-foreground/50">
               {instrument.symbol} · {instrument.assetClass.toUpperCase()}
             </div>
-            <div className="mt-0.5 text-base font-bold text-brand-navy">{instrument.name}</div>
+            <div className="mt-0.5 text-base font-bold text-foreground">{instrument.name}</div>
           </div>
           <ScoreBadge score={opportunity.aiScore} />
         </div>

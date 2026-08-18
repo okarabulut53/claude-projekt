@@ -27,7 +27,7 @@ export function OnboardingShell({
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                   index <= activeIndex
                     ? "bg-brand-teal text-white"
-                    : "bg-white text-foreground/40 border border-brand-border"
+                    : "bg-surface text-foreground/40 border border-brand-border"
                 }`}
               >
                 {index + 1}
@@ -41,8 +41,8 @@ export function OnboardingShell({
           ))}
         </div>
 
-        <div className="rounded-2xl border border-brand-border bg-white p-8 shadow-sm">
-          <h1 className="text-2xl font-bold tracking-tight text-brand-navy">{title}</h1>
+        <div className="rounded-2xl border border-brand-border bg-surface p-8 shadow-sm">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">{description}</p>
           <div className="mt-8">{children}</div>
         </div>

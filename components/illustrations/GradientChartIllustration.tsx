@@ -44,9 +44,9 @@ export function GradientChartIllustration() {
         ))}
       </svg>
 
-      <div className="relative mx-auto -mt-6 w-fit rounded-2xl border border-brand-border bg-white px-4 py-2.5 shadow-md">
+      <div className="relative mx-auto -mt-6 w-fit rounded-2xl border border-brand-border bg-surface px-4 py-2.5 shadow-md">
         <div className="text-[10px] leading-none text-foreground/50">AI Score Trend, 7 Tage</div>
-        <div className="mt-1 text-sm font-bold text-brand-navy">Ø 78/100 · steigende Tendenz</div>
+        <div className="mt-1 text-sm font-bold text-foreground">Ø 78/100 · steigende Tendenz</div>
       </div>
     </div>
   );

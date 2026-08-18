@@ -4,11 +4,32 @@ import { getOpportunityForSymbol } from "@/lib/mock/opportunities";
 import { getNewsForSymbols } from "@/lib/mock/news";
 import { Card } from "@/components/ui/Card";
 import { ChangeBadge, DataSourceBadge, RiskBadge, ScoreBadge } from "@/components/ui/Badge";
-import { LineChart } from "@/components/charts/LineChart";
+import { InstrumentChart } from "@/components/instrument/InstrumentChart";
 import { DisclaimerNote } from "@/components/ui/DisclaimerNote";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
+import { syntheticCandlesFromPricePoints, twelveDataToCandles } from "@/lib/chart-transform";
+import { liveSymbols } from "@/lib/market-data/symbols";
+import { fetchTwelveDataOhlcvOrThrow } from "@/lib/market-data/twelvedata";
+import { cached } from "@/lib/market-data/cache";
+import { CandleDatum } from "@/components/charts/CandlestickChart";
 
 const volatilityRisk = { niedrig: "low", mittel: "medium", hoch: "high" } as const;
+
+async function loadInitialCandles(symbol: string, history: Parameters<typeof syntheticCandlesFromPricePoints>[1]) {
+  const map = liveSymbols[symbol];
+  if (!map) return { candles: syntheticCandlesFromPricePoints(symbol, history), isLive: false };
+
+  try {
+    const bars = await cached(`chart:${symbol}:1D`, 6 * 3600_000, () =>
+      fetchTwelveDataOhlcvOrThrow(map.twelveData, "1day"),
+    );
+    return { candles: twelveDataToCandles(bars), isLive: true };
+  } catch {
+    // Twelve Data unavailable/rate-limited right now — still mark isLive so the client
+    // component knows to retry via the API route on the next interval switch.
+    return { candles: syntheticCandlesFromPricePoints(symbol, history), isLive: true };
+  }
+}
 
 export default async function InstrumentDetailPage({
   params,
@@ -19,12 +40,12 @@ export default async function InstrumentDetailPage({
   const instrument = await getInstrument(symbol);
   if (!instrument) notFound();
 
-  const [opportunity, news] = await Promise.all([
+  const [opportunity, news, { candles, isLive }] = await Promise.all([
     getOpportunityForSymbol(symbol),
     getNewsForSymbols([instrument.symbol]),
+    loadInitialCandles(instrument.symbol, instrument.history),
   ]);
-  const chartHistory = instrument.history.slice(-30);
-  const chartPositive = chartHistory[chartHistory.length - 1].price >= chartHistory[0].price;
+  const initialCandles: CandleDatum[] = candles;
 
   return (
     <div className="space-y-8">
@@ -33,7 +54,7 @@ export default async function InstrumentDetailPage({
           <div className="flex items-center gap-2 text-xs font-medium text-foreground/50">
             {instrument.symbol} · {instrument.assetClass.toUpperCase()}
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-navy">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
             {instrument.name}
           </h1>
           <div className="mt-2">
@@ -41,35 +62,28 @@ export default async function InstrumentDetailPage({
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-brand-navy">
+          <div className="text-2xl font-bold text-foreground">
             {formatCurrency(instrument.price, instrument.currency)}
           </div>
           <ChangeBadge value={instrument.changePercent1d} />
         </div>
       </div>
 
-      <Card>
-        <div className="mb-4 flex flex-wrap items-center gap-4 text-sm">
-          <span className="text-foreground/50">30 Tage</span>
-          <span className="text-foreground/30">·</span>
-          <span className="text-foreground/70">
-            30-Tage-Veränderung: <ChangeBadge value={instrument.changePercent30d} />
-          </span>
-          <span className="text-foreground/30">·</span>
-          <span className="text-foreground/70">Volatilität: {instrument.volatility}</span>
-        </div>
-        <LineChart
-          data={chartHistory}
-          positive={chartPositive}
-          currencyLabel={instrument.currency}
-        />
-      </Card>
+      <InstrumentChart
+        symbol={instrument.symbol}
+        name={instrument.name}
+        currency={instrument.currency}
+        initialPrice={instrument.price}
+        initialChangePercent={instrument.changePercent1d}
+        initialCandles={initialCandles}
+        isLive={isLive}
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-brand-navy">AI Investment Score</h2>
+              <h2 className="text-base font-semibold text-foreground">AI Investment Score</h2>
               {opportunity && <ScoreBadge score={opportunity.aiScore} />}
             </div>
             {opportunity ? (
@@ -113,7 +127,7 @@ export default async function InstrumentDetailPage({
           </Card>
 
           <Card>
-            <h2 className="text-base font-semibold text-brand-navy">Relevante News</h2>
+            <h2 className="text-base font-semibold text-foreground">Relevante News</h2>
             {news.length === 0 ? (
               <p className="mt-3 text-sm text-foreground/60">
                 Aktuell keine News zu diesem Instrument.
@@ -130,12 +144,12 @@ export default async function InstrumentDetailPage({
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-1 block text-sm font-semibold text-brand-navy hover:underline"
+                        className="mt-1 block text-sm font-semibold text-foreground hover:underline"
                       >
                         {item.title}
                       </a>
                     ) : (
-                      <h3 className="mt-1 text-sm font-semibold text-brand-navy">{item.title}</h3>
+                      <h3 className="mt-1 text-sm font-semibold text-foreground">{item.title}</h3>
                     )}
                     {item.summary && (
                       <p className="mt-1 text-sm leading-relaxed text-foreground/70">{item.summary}</p>
@@ -148,7 +162,7 @@ export default async function InstrumentDetailPage({
         </div>
 
         <Card className="h-fit">
-          <h2 className="text-base font-semibold text-brand-navy">Kennzahlen</h2>
+          <h2 className="text-base font-semibold text-foreground">Kennzahlen</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div className="flex justify-between">
               <dt className="text-foreground/50">Kurs</dt>

@@ -3,7 +3,7 @@ import { analyzePortfolio, assetClassLabel } from "@/lib/portfolio-analysis";
 import { getOpportunityForSymbol, getOpportunitiesForRiskProfile } from "@/lib/mock/opportunities";
 import { formatCurrency } from "@/lib/format";
 
-const glossary: { pattern: RegExp; answer: string }[] = [
+export const glossary: { pattern: RegExp; answer: string }[] = [
   {
     pattern: /\betf\b/i,
     answer:
@@ -61,6 +61,19 @@ export async function generateChatReply(
 ): Promise<string> {
   const lower = message.toLowerCase();
   const analysis = analyzePortfolio(positions);
+
+  // Genuinely general questions (not market/portfolio data) — this pattern-matched engine can't
+  // reason like the real Claude-backed path (lib/finara-ai/client.ts), but it shouldn't claim
+  // "keine verlässlichen Daten" for something as basic as today's date either.
+  if (/welches datum|welcher tag (ist|haben)|heutiges datum|wie spät/i.test(lower)) {
+    const formatted = new Intl.DateTimeFormat("de-DE", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
+    return `Heute ist ${formatted}.`;
+  }
 
   if (/(guthaben|kontostand|wie viel.*wert|portfolio.*wert)/i.test(lower)) {
     if (positions.length === 0) {

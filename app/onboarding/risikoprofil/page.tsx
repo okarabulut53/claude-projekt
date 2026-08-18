@@ -55,7 +55,7 @@ export default function RiskProfileOnboardingPage() {
               className="sr-only"
               required
             />
-            <div className="font-semibold text-brand-navy">{option.title}</div>
+            <div className="font-semibold text-foreground">{option.title}</div>
             <div className="mt-1 text-sm text-foreground/70">{option.description}</div>
           </label>
         ))}

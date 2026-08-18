@@ -36,7 +36,7 @@ export function PositionsTable({ positions }: { positions: PortfolioPosition[] }
             return (
               <tr key={position.id} className="border-b border-brand-border last:border-0">
                 <td className="py-3">
-                  <div className="font-semibold text-brand-navy">{position.name}</div>
+                  <div className="font-semibold text-foreground">{position.name}</div>
                   <div className="text-xs text-foreground/50">
                     {position.symbol} · {position.assetClass.toUpperCase()}
                   </div>

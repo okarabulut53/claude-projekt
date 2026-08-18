@@ -105,7 +105,7 @@ export function Hauptseite() {
               <span className="inline-flex items-center rounded-full bg-brand-teal-light px-4 py-1.5 text-xs font-semibold text-brand-teal">
                 KI-gestützte Investmentanalyse
               </span>
-              <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-brand-navy md:text-5xl">
+              <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-foreground md:text-5xl">
                 Investmentchancen{" "}
                 <span className="inline-block rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 px-3 py-0.5 text-white">
                   erkennen
@@ -121,7 +121,7 @@ export function Hauptseite() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Show when="signed-in">
-                  <ButtonLink href="/dashboard">Zum Dashboard</ButtonLink>
+                  <ButtonLink href="/finaraai">Zu FinaraAI</ButtonLink>
                 </Show>
                 <Show when="signed-out">
                   <SignUpButton>
@@ -132,7 +132,7 @@ export function Hauptseite() {
                 </Show>
                 <Link
                   href="#scoring"
-                  className="inline-flex items-center justify-center rounded-full border border-brand-border px-6 py-3 text-sm font-semibold text-brand-navy hover:bg-white"
+                  className="inline-flex items-center justify-center rounded-full border border-brand-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-surface"
                 >
                   So funktioniert der AI Score
                 </Link>
@@ -150,7 +150,7 @@ export function Hauptseite() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs font-medium text-foreground/50">Investment Opportunity</div>
-                    <div className="mt-1 text-lg font-bold text-brand-navy">NVIDIA Corp. · NVDA</div>
+                    <div className="mt-1 text-lg font-bold text-foreground">NVIDIA Corp. · NVDA</div>
                   </div>
                   <ScoreBadge score={87} />
                 </div>
@@ -184,7 +184,7 @@ export function Hauptseite() {
           <Container className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center md:text-left">
-                <div className="text-2xl font-bold text-brand-navy md:text-3xl">{stat.value}</div>
+                <div className="text-2xl font-bold text-foreground md:text-3xl">{stat.value}</div>
                 <div className="mt-1 text-xs leading-snug text-foreground/60">{stat.label}</div>
               </div>
             ))}
@@ -195,7 +195,7 @@ export function Hauptseite() {
         <section id="funktionen" className="py-24">
           <Container>
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight text-brand-navy">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground">
                 Alles, was du für fundierte Entscheidungen brauchst
               </h2>
               <p className="mt-4 text-foreground/70">
@@ -209,7 +209,7 @@ export function Hauptseite() {
                   <IconTile>
                     <feature.icon />
                   </IconTile>
-                  <h3 className="mt-4 text-base font-semibold text-brand-navy">{feature.title}</h3>
+                  <h3 className="mt-4 text-base font-semibold text-foreground">{feature.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                     {feature.description}
                   </p>
@@ -227,7 +227,7 @@ export function Hauptseite() {
               <span className="inline-flex items-center rounded-full bg-fuchsia-50 px-4 py-1.5 text-xs font-semibold text-fuchsia-600">
                 Entwicklung statt Momentaufnahme
               </span>
-              <h2 className="mt-6 text-3xl font-bold tracking-tight text-brand-navy">
+              <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
                 Der Score wird börsentäglich neu berechnet
               </h2>
               <p className="mt-4 text-foreground/70">
@@ -283,12 +283,12 @@ export function Hauptseite() {
                 </li>
               </ul>
             </div>
-            <Card className="bg-white text-foreground">
+            <Card className="bg-surface text-foreground">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-medium text-foreground/50">Beispiel-Analyse</div>
                 <ScoreBadge score={82} />
               </div>
-              <div className="mt-2 text-lg font-bold text-brand-navy">
+              <div className="mt-2 text-lg font-bold text-foreground">
                 Allianz SE · ALV
               </div>
               <div className="mt-3">
@@ -318,7 +318,7 @@ export function Hauptseite() {
         <section className="py-24">
           <Container>
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight text-brand-navy">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground">
                 Dein Risikoprofil steuert deine Vorschläge
               </h2>
               <p className="mt-4 text-foreground/70">
@@ -336,7 +336,7 @@ export function Hauptseite() {
                     </IconTile>
                     <RiskBadge level={profile.level} />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-brand-navy">{profile.title}</h3>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">{profile.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                     {profile.description}
                   </p>
@@ -350,7 +350,7 @@ export function Hauptseite() {
         <section id="preise" className="bg-brand-surface py-24">
           <Container>
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight text-brand-navy">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground">
                 Einfacher Einstieg, faire Preise
               </h2>
               <p className="mt-4 text-foreground/70">
@@ -363,7 +363,7 @@ export function Hauptseite() {
                 <div className="text-xs font-semibold uppercase tracking-wide text-brand-teal">
                   Beta
                 </div>
-                <div className="mt-2 text-3xl font-bold text-brand-navy">Kostenlos</div>
+                <div className="mt-2 text-3xl font-bold text-foreground">Kostenlos</div>
                 <p className="mt-2 text-sm text-foreground/70">
                   Voller Zugriff auf Dashboard, AI Investment Score, Suche, Chatbot und
                   Portfolio-Analyse während der Beta-Phase.
@@ -380,7 +380,7 @@ export function Hauptseite() {
                 <div className="text-xs font-semibold uppercase tracking-wide text-foreground/40">
                   Pro
                 </div>
-                <div className="mt-2 text-3xl font-bold text-brand-navy">Bald verfügbar</div>
+                <div className="mt-2 text-3xl font-bold text-foreground">Bald verfügbar</div>
                 <p className="mt-2 text-sm text-foreground/70">
                   Erweiterte Analysen, mehr Depot-Anbindungen und WhatsApp-Benachrichtigungen für
                   aktive Nutzer. Preise folgen nach Ende der Beta-Phase.
@@ -411,8 +411,8 @@ export function Hauptseite() {
                 </SignUpButton>
               </Show>
               <Show when="signed-in">
-                <ButtonLink href="/dashboard" className="bg-brand-teal">
-                  Zum Dashboard
+                <ButtonLink href="/finaraai" className="bg-brand-teal">
+                  Zu FinaraAI
                 </ButtonLink>
               </Show>
             </Card>

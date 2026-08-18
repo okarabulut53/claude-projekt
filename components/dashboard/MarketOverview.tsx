@@ -8,7 +8,7 @@ export function MarketOverview({ indices }: { indices: MarketIndex[] }) {
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-brand-navy">Marktüberblick</h2>
+        <h2 className="text-base font-semibold text-foreground">Marktüberblick</h2>
         <DataSourceBadge source="simulated" />
       </div>
       <p className="mt-1 text-xs text-foreground/50">
@@ -19,7 +19,7 @@ export function MarketOverview({ indices }: { indices: MarketIndex[] }) {
         {indices.map((index) => (
           <div key={index.symbol} className="rounded-xl border border-brand-border p-4">
             <div className="text-xs font-medium text-foreground/50">{index.name}</div>
-            <div className="mt-1 text-lg font-bold text-brand-navy">
+            <div className="mt-1 text-lg font-bold text-foreground">
               {formatNumber(Math.round(index.value))}
             </div>
             <div className="mt-1">

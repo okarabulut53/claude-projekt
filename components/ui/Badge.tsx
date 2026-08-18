@@ -1,4 +1,5 @@
 import { RiskProfile } from "@/lib/types";
+import { DataSource, getDataSourceInfo } from "@/lib/data-source";
 
 const riskLabels: Record<RiskProfile, string> = {
   low: "Niedriges Risiko",
@@ -42,19 +43,26 @@ export function ChangeBadge({ value }: { value: number }) {
   );
 }
 
-export function DataSourceBadge({ source }: { source: "live" | "simulated" }) {
+export function DataSourceBadge({ source }: { source: DataSource }) {
+  const { label, tooltip } = getDataSourceInfo(source);
   if (source === "live") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-risk-low-bg px-2.5 py-1 text-[11px] font-semibold text-risk-low">
+      <span
+        title={tooltip}
+        className="inline-flex items-center gap-1.5 rounded-full bg-risk-low-bg px-2.5 py-1 text-[11px] font-semibold text-risk-low"
+      >
         <span className="h-1.5 w-1.5 rounded-full bg-risk-low" />
-        Live-Kurs
+        {label}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-surface px-2.5 py-1 text-[11px] font-semibold text-foreground/50">
+    <span
+      title={tooltip}
+      className="inline-flex items-center gap-1.5 rounded-full bg-brand-surface px-2.5 py-1 text-[11px] font-semibold text-foreground/50"
+    >
       <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
-      Simulationsdaten
+      {label}
     </span>
   );
 }

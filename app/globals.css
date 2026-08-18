@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #0b1b33;
+  --surface: #ffffff;
+  --surface-hover: #f6f8fb;
 
   --brand-navy: #0b1b33;
   --brand-navy-light: #142c52;
@@ -17,11 +19,68 @@
   --risk-medium-bg: #fef6e7;
   --risk-high: #dc2626;
   --risk-high-bg: #fdecec;
+
+  --chart-bg: var(--surface);
+  --chart-text: var(--foreground);
+  --chart-grid: var(--brand-border);
+  --chart-border: var(--brand-border);
+  --chart-up: var(--risk-low);
+  --chart-down: var(--risk-high);
+}
+
+/* Dark palette — kept in sync in two places (system preference + explicit toggle)
+   because CSS can't combine a media query and an attribute selector into one block. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0a1120;
+    --foreground: #e7ecf6;
+    --surface: #101a2e;
+    --surface-hover: #172742;
+
+    --brand-navy-light: #22385e;
+    --brand-teal: #2dd4c4;
+    --brand-teal-light: rgba(45, 212, 196, 0.14);
+    --brand-surface: #0a1120;
+    --brand-border: #24314c;
+
+    --risk-low: #34d399;
+    --risk-low-bg: rgba(52, 211, 153, 0.14);
+    --risk-medium: #fbbf24;
+    --risk-medium-bg: rgba(251, 191, 36, 0.14);
+    --risk-high: #f87171;
+    --risk-high-bg: rgba(248, 113, 113, 0.14);
+
+    --chart-grid: rgba(255, 255, 255, 0.06);
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #0a1120;
+  --foreground: #e7ecf6;
+  --surface: #101a2e;
+  --surface-hover: #172742;
+
+  --brand-navy-light: #22385e;
+  --brand-teal: #2dd4c4;
+  --brand-teal-light: rgba(45, 212, 196, 0.14);
+  --brand-surface: #0a1120;
+  --brand-border: #24314c;
+
+  --risk-low: #34d399;
+  --risk-low-bg: rgba(52, 211, 153, 0.14);
+  --risk-medium: #fbbf24;
+  --risk-medium-bg: rgba(251, 191, 36, 0.14);
+  --risk-high: #f87171;
+  --risk-high-bg: rgba(248, 113, 113, 0.14);
+
+  --chart-grid: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
   --color-brand-navy: var(--brand-navy);
   --color-brand-navy-light: var(--brand-navy-light);
   --color-brand-teal: var(--brand-teal);

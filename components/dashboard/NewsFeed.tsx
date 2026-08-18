@@ -19,7 +19,7 @@ export function NewsFeed({
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-brand-navy">News-Feed</h2>
+        <h2 className="text-base font-semibold text-foreground">News-Feed</h2>
         {relevantSymbols.length > 0 && (
           <span className="text-xs text-foreground/50">Sortiert nach Portfolio-Relevanz</span>
         )}
@@ -44,12 +44,12 @@ export function NewsFeed({
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 block text-sm font-semibold text-brand-navy hover:underline"
+                  className="mt-1 block text-sm font-semibold text-foreground hover:underline"
                 >
                   {item.title}
                 </a>
               ) : (
-                <h3 className="mt-1 text-sm font-semibold text-brand-navy">{item.title}</h3>
+                <h3 className="mt-1 text-sm font-semibold text-foreground">{item.title}</h3>
               )}
               {item.summary && (
                 <p className="mt-1 text-sm leading-relaxed text-foreground/70">{item.summary}</p>

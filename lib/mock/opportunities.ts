@@ -49,6 +49,50 @@ const seeds: OpportunitySeed[] = [
     assessment: "Geeignet für Nutzer mit niedriger Risikobereitschaft als breit gestreuter Basisbaustein.",
   },
   {
+    symbol: "SIE",
+    riskLevel: "low",
+    aiScore: 76,
+    entrySpread: 0.014,
+    holdingPeriod: "langfristig",
+    reasoning:
+      "Breit diversifiziertes Industrie- und Digitalisierungsgeschäft mit stabilem Auftragsbestand spricht für ein ausgewogenes Chancen/Risiko-Verhältnis.",
+    risks: "Konjunkturabhängigkeit im Industriegeschäft, Margendruck in einzelnen Sparten möglich.",
+    assessment: "Solide Basisposition für Nutzer mit niedriger Risikobereitschaft und Interesse an Industriewerten.",
+  },
+  {
+    symbol: "DTE",
+    riskLevel: "low",
+    aiScore: 72,
+    entrySpread: 0.011,
+    holdingPeriod: "langfristig",
+    reasoning:
+      "Stabile Cashflows aus dem Telekommunikationsgeschäft und kontinuierliche Dividendenzahlungen sprechen für ein defensives Profil.",
+    risks: "Hoher Kapitalbedarf für Netzausbau, regulatorische Eingriffe in der Telekommunikationsbranche möglich.",
+    assessment: "Interessante Chance für Nutzer mit niedriger Risikobereitschaft und Fokus auf Ausschüttungen.",
+  },
+  {
+    symbol: "IUSA",
+    riskLevel: "low",
+    aiScore: 79,
+    entrySpread: 0.009,
+    holdingPeriod: "langfristig",
+    reasoning:
+      "Breite Streuung über den US-Aktienmarkt reduziert Einzeltitelrisiken bei historisch soliden langfristigen Renditen.",
+    risks: "Währungsrisiko durch USD-Bezug, hohe Gewichtung einzelner Technologiewerte innerhalb des Index.",
+    assessment: "Geeignet für Nutzer mit niedriger Risikobereitschaft als breit gestreuter Basisbaustein.",
+  },
+  {
+    symbol: "VWCE",
+    riskLevel: "low",
+    aiScore: 77,
+    entrySpread: 0.009,
+    holdingPeriod: "langfristig",
+    reasoning:
+      "Globale Streuung über tausende Einzeltitel reduziert regionale und branchenspezifische Klumpenrisiken.",
+    risks: "Wertentwicklung folgt eng dem Gesamtmarkt, Übergewichtung des US-Marktes innerhalb des Index.",
+    assessment: "Geeignet für Nutzer mit niedriger Risikobereitschaft als breit gestreuter Basisbaustein.",
+  },
+  {
     symbol: "MSFT",
     riskLevel: "medium",
     aiScore: 84,
@@ -113,6 +157,17 @@ const seeds: OpportunitySeed[] = [
       "Steigende Netzwerkaktivität und wachsendes Ökosystem sprechen für erhöhtes Momentum im Altcoin-Segment.",
     risks: "Sehr hohe Volatilität, geringere Marktkapitalisierung als etablierte Kryptowährungen, technologische Konkurrenz.",
     assessment: "Spekulative Chance für Nutzer mit hoher Risikobereitschaft, die kurzfristige Momentum-Themen suchen.",
+  },
+  {
+    symbol: "ETH",
+    riskLevel: "high",
+    aiScore: 74,
+    entrySpread: 0.05,
+    holdingPeriod: "kurz- bis mittelfristig",
+    reasoning:
+      "Breite Nutzung als Basis-Infrastruktur für dezentrale Anwendungen und wachsende institutionelle Zuflüsse sprechen für erhöhtes Momentum.",
+    risks: "Hohe Kursschwankungen, Netzwerk-Upgrades und regulatorische Rahmenbedingungen können sich kurzfristig ändern.",
+    assessment: "Chance für Nutzer mit hoher Risikobereitschaft, die eine begrenzte Krypto-Beimischung jenseits von Bitcoin erwägen.",
   },
 ];
 

@@ -1,4 +1,4 @@
-import { AssetClass, RiskProfile } from "@/lib/types";
+import { AssetClass, ChatMessage, RiskProfile } from "@/lib/types";
 
 export interface Database {
   public: {
@@ -50,6 +50,75 @@ export interface Database {
           source?: "manual" | "depot";
         };
         Update: Partial<Database["public"]["Tables"]["portfolio_positions"]["Insert"]>;
+        Relationships: [];
+      };
+      watchlist_items: {
+        Row: {
+          id: string;
+          user_id: string;
+          symbol: string;
+          asset_class: AssetClass;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          symbol: string;
+          asset_class: AssetClass;
+        };
+        Update: Partial<Database["public"]["Tables"]["watchlist_items"]["Insert"]>;
+        Relationships: [];
+      };
+      chat_folders: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["chat_folders"]["Insert"]>;
+        Relationships: [];
+      };
+      chat_threads: {
+        Row: {
+          id: string;
+          user_id: string;
+          folder_id: string | null;
+          title: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          folder_id?: string | null;
+          title?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["chat_threads"]["Insert"]> & {
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      chat_messages: {
+        Row: {
+          id: string;
+          thread_id: string;
+          role: ChatMessage["role"];
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          thread_id: string;
+          role: ChatMessage["role"];
+          content: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["chat_messages"]["Insert"]>;
         Relationships: [];
       };
     };

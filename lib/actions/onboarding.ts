@@ -30,5 +30,5 @@ export async function saveRiskProfile(formData: FormData) {
   }
   await updateRiskProfile(userId, riskProfile);
   await markOnboardingCompleted(userId);
-  redirect("/dashboard");
+  redirect("/finaraai");
 }

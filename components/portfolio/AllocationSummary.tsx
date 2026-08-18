@@ -14,7 +14,7 @@ export function AllocationSummary({ analysis }: { analysis: PortfolioAnalysis })
     <div className="grid gap-6 lg:grid-cols-3">
       <Card>
         <div className="text-xs font-medium text-foreground/50">Gesamtwert</div>
-        <div className="mt-1 text-2xl font-bold text-brand-navy">
+        <div className="mt-1 text-2xl font-bold text-foreground">
           {formatCurrency(analysis.totalValue)}
         </div>
         <div className="mt-2 flex items-center gap-2">

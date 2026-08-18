@@ -133,10 +133,13 @@ Three separate data sources exist and shouldn't be confused:
   `SUPABASE_SERVICE_ROLE_KEY` are unset (`isSupabaseConfigured()` in `lib/supabase.ts` gates it).
   Every function in `lib/db.ts` checks this first and delegates to the mock store instead of
   throwing, so the full authenticated flow (onboarding → dashboard → portfolio → chat) works
-  before Supabase is ever configured — data just doesn't survive a dev-server restart. Once real
-  Supabase credentials are added to `.env.local`, `lib/db.ts` switches to Postgres automatically;
-  no code change needed. Don't add a third persistence path — extend `lib/db.ts`'s existing
-  if/else instead.
+  before Supabase is ever configured. It persists to a gitignored `.data/mock-store.json` on every
+  write (still single-machine, no concurrency safety — not a real database) specifically so
+  onboarding state survives a dev-server restart instead of forcing the risk-profile gate in
+  `app/(main)/layout.tsx` to re-trigger on every restart. Delete `.data/mock-store.json` to reset
+  onboarding state on purpose. Once real Supabase credentials are added to `.env.local`, `lib/db.ts`
+  switches to Postgres automatically; no code change needed. Don't add a third persistence path —
+  extend `lib/db.ts`'s existing if/else instead.
 - Portfolio "current price" is looked up live from `lib/mock/instruments.ts` by symbol
   (`lib/db.ts`'s `getPortfolioPositions`), not stored — so a position's gain/loss always reflects
   the mock market data's current price, not a stale snapshot.

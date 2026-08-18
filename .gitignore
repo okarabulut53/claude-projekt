@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# dev-only mock persistence (see lib/mock/user-store.ts)
+/.data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -2,10 +2,10 @@ import { MarketIndex } from "@/lib/types";
 import { generateHistory } from "./random";
 
 const seeds = [
-  { symbol: "DAX", name: "DAX", price: 19850 },
-  { symbol: "MDAX", name: "MDAX", price: 27340 },
-  { symbol: "SPX", name: "S&P 500", price: 6120 },
-  { symbol: "NDX", name: "Nasdaq 100", price: 21870 },
+  { symbol: "DAX", name: "DAX", price: 26338 },
+  { symbol: "MDAX", name: "MDAX", price: 29800 },
+  { symbol: "SPX", name: "S&P 500", price: 6900 },
+  { symbol: "NDX", name: "Nasdaq 100", price: 24600 },
 ];
 
 let cache: MarketIndex[] | null = null;

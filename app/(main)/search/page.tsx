@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { searchInstruments } from "@/lib/mock/instruments";
 import { Card } from "@/components/ui/Card";
-import { ChangeBadge } from "@/components/ui/Badge";
+import { ChangeBadge, DataSourceBadge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/format";
 
 export default async function SearchPage({
@@ -11,7 +11,7 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams;
   const query = q ?? "";
-  const results = searchInstruments(query);
+  const results = await searchInstruments(query);
 
   return (
     <div className="space-y-6">
@@ -38,8 +38,11 @@ export default async function SearchPage({
             >
               <div>
                 <div className="text-sm font-semibold text-brand-navy">{instrument.name}</div>
-                <div className="text-xs text-foreground/50">
-                  {instrument.symbol} · {instrument.assetClass.toUpperCase()}
+                <div className="mt-1 flex items-center gap-2 text-xs text-foreground/50">
+                  <span>
+                    {instrument.symbol} · {instrument.assetClass.toUpperCase()}
+                  </span>
+                  <DataSourceBadge source={instrument.source} />
                 </div>
               </div>
               <div className="text-right">

@@ -39,8 +39,21 @@ export function NewsFeed({
                   </span>
                 )}
               </div>
-              <h3 className="mt-1 text-sm font-semibold text-brand-navy">{item.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-foreground/70">{item.summary}</p>
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block text-sm font-semibold text-brand-navy hover:underline"
+                >
+                  {item.title}
+                </a>
+              ) : (
+                <h3 className="mt-1 text-sm font-semibold text-brand-navy">{item.title}</h3>
+              )}
+              {item.summary && (
+                <p className="mt-1 text-sm leading-relaxed text-foreground/70">{item.summary}</p>
+              )}
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {item.relatedSymbols.map((symbol) => (
                   <span

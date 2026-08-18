@@ -11,5 +11,5 @@ export async function sendChatMessage(message: string): Promise<string> {
   const appUser = await getOrCreateAppUser(userId, user?.primaryEmailAddress?.emailAddress ?? null);
   const positions = await getPortfolioPositions(userId);
 
-  return generateChatReply(message, appUser, positions);
+  return await generateChatReply(message, appUser, positions);
 }

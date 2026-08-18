@@ -23,6 +23,7 @@ export interface Instrument {
   changePercent30d: number;
   volatility: "niedrig" | "mittel" | "hoch";
   history: PricePoint[];
+  source: "live" | "simulated";
 }
 
 export interface InvestmentOpportunity {
@@ -46,6 +47,7 @@ export interface NewsItem {
   publishedAt: string;
   relatedSymbols: string[];
   summary: string;
+  url?: string;
 }
 
 export interface MarketIndex {

@@ -26,14 +26,19 @@ const glossary: { pattern: RegExp; answer: string }[] = [
   },
 ];
 
-function findMentionedSymbol(message: string) {
+async function findMentionedSymbol(message: string) {
   const lower = message.toLowerCase();
-  const instruments = getOpportunitiesForRiskProfile("low")
-    .concat(getOpportunitiesForRiskProfile("medium"), getOpportunitiesForRiskProfile("high"))
-    .map((o) => o.instrument);
-  return instruments.find(
-    (i) => lower.includes(i.symbol.toLowerCase()) || lower.includes(i.name.toLowerCase()),
-  );
+  const [low, medium, high] = await Promise.all([
+    getOpportunitiesForRiskProfile("low"),
+    getOpportunitiesForRiskProfile("medium"),
+    getOpportunitiesForRiskProfile("high"),
+  ]);
+  const instruments = low.concat(medium, high).map((o) => o.instrument);
+  return instruments.find((i) => {
+    const symbolPattern = new RegExp(`\\b${i.symbol.toLowerCase()}\\b`);
+    const firstNameWord = i.name.toLowerCase().split(/\s+/)[0];
+    return symbolPattern.test(lower) || lower.includes(i.name.toLowerCase()) || lower.includes(firstNameWord);
+  });
 }
 
 function formatPositionList(positions: PortfolioPosition[]) {
@@ -42,11 +47,18 @@ function formatPositionList(positions: PortfolioPosition[]) {
     .join(", ");
 }
 
-export function generateChatReply(
+async function opportunitiesForPositions(positions: PortfolioPosition[]) {
+  const entries = await Promise.all(
+    positions.map(async (p) => [p.symbol, await getOpportunityForSymbol(p.symbol)] as const),
+  );
+  return new Map(entries.filter((entry): entry is [string, NonNullable<typeof entry[1]>] => Boolean(entry[1])));
+}
+
+export async function generateChatReply(
   message: string,
   appUser: AppUser,
   positions: PortfolioPosition[],
-): string {
+): Promise<string> {
   const lower = message.toLowerCase();
   const analysis = analyzePortfolio(positions);
 
@@ -62,8 +74,9 @@ export function generateChatReply(
     if (positions.length === 0) {
       return "Dazu liegen mir keine verlässlichen Daten vor — dein Portfolio enthält aktuell keine Positionen.";
     }
+    const opportunityBySymbol = await opportunitiesForPositions(positions);
     const critical = positions.filter((p) => {
-      const opportunity = getOpportunityForSymbol(p.symbol);
+      const opportunity = opportunityBySymbol.get(p.symbol);
       return opportunity && opportunity.aiScore < 75;
     });
     if (critical.length === 0) {
@@ -71,7 +84,7 @@ export function generateChatReply(
     }
     const details = critical
       .map((p) => {
-        const opportunity = getOpportunityForSymbol(p.symbol)!;
+        const opportunity = opportunityBySymbol.get(p.symbol)!;
         return `${p.name} (Score ${opportunity.aiScore}/100, ${opportunity.risks})`;
       })
       .join("; ");
@@ -82,13 +95,14 @@ export function generateChatReply(
     if (positions.length === 0) {
       return "Dazu liegen mir keine verlässlichen Daten vor — dein Portfolio enthält aktuell keine Positionen.";
     }
+    const opportunityBySymbol = await opportunitiesForPositions(positions);
     const strong = positions.filter((p) => {
-      const opportunity = getOpportunityForSymbol(p.symbol);
+      const opportunity = opportunityBySymbol.get(p.symbol);
       return !opportunity || opportunity.aiScore >= 75;
     });
     const details = strong
       .map((p) => {
-        const opportunity = getOpportunityForSymbol(p.symbol);
+        const opportunity = opportunityBySymbol.get(p.symbol);
         return opportunity
           ? `${p.name} (Score ${opportunity.aiScore}/100)`
           : `${p.name} (keine aktuelle AI-Einschätzung verfügbar)`;
@@ -97,9 +111,9 @@ export function generateChatReply(
     return `Basierend auf aktuellen Daten würde ich folgende Position(en) eher halten: ${details || "keine"}. Dies ist eine Einschätzung mit Reasoning, keine Handlungsanweisung.`;
   }
 
-  const mentionedInstrument = findMentionedSymbol(message);
+  const mentionedInstrument = await findMentionedSymbol(message);
   if (mentionedInstrument) {
-    const opportunity = getOpportunityForSymbol(mentionedInstrument.symbol);
+    const opportunity = await getOpportunityForSymbol(mentionedInstrument.symbol);
     if (!opportunity) {
       return `Zu ${mentionedInstrument.name} (${mentionedInstrument.symbol}) liegt aktuell keine aktive AI-Einschätzung vor — der Kurs steht bei ${formatCurrency(mentionedInstrument.price, mentionedInstrument.currency)}.`;
     }

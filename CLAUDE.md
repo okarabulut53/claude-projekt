@@ -89,16 +89,38 @@ to have a recognizable name — add the named component under `components/pages/
   intentional, so the URL for onboarding stays `/onboarding/...` rather than picking up an extra
   segment.
 
-## Data layer: mock market data vs. Supabase
+## Data layer: live market data, mock fallback, and Supabase
 
-Two separate data sources exist and shouldn't be confused:
+Three separate data sources exist and shouldn't be confused:
 
+- **`lib/market-data/*`** — real API clients for Finnhub (`finnhub.ts`: quotes, general/company
+  news) and Twelve Data (`twelvedata.ts`: daily historical bars), both free-tier, plus a shared
+  in-memory TTL cache (`cache.ts`) that all fetches must go through. `symbols.ts` maps this app's
+  internal symbols to provider tickers **only for the instruments verified to have accurate free
+  coverage**: US-listed stocks (SAP's NYSE ADR, NVDA, MSFT, TSLA, ASML) and crypto
+  (`BINANCE:xUSDT` on Finnhub / `xUSD` on Twelve Data for BTC/ETH/SOL). Deliberately *not*
+  live-wired: SIE/ALV/DTE (only trade OTC as ADRs with unverified conversion ratios — showing that
+  price mislabeled as the XETRA share price would be misleading) and IUSA/EXW1/VWCE (UCITS ETFs
+  aren't covered by either provider's free tier). Both free tiers are rate-limited (Finnhub: 60
+  req/min; Twelve Data: 8 req/min, 800/day) — quotes are cached 60s, history 6h, general news 5min,
+  company news 15min. `cached()` serves a stale value on fetch failure rather than throwing.
 - **`lib/mock/*`** — stocks/ETFs/crypto, market indices, news, and AI Investment Opportunities.
-  All deterministically generated (seeded PRNG in `lib/mock/random.ts`, keyed by symbol) so
-  prices/history are stable across requests instead of randomizing on every render. This stands
-  in for a future real market-data/news/LLM-scoring provider — when wiring one in, replace the
-  functions in `lib/mock/instruments.ts` / `market.ts` / `news.ts` / `opportunities.ts` and the
-  rest of the app (which only calls their exported functions) shouldn't need to change.
+  Deterministically generated (seeded PRNG in `lib/mock/random.ts`, keyed by symbol) so
+  prices/history are stable across requests instead of randomizing on every render.
+  `lib/mock/instruments.ts` is now the merge point: for each seed symbol it tries
+  `lib/market-data` first (via `liveSymbols`) and falls back to the deterministic generator on any
+  failure (missing API key, rate limit, unknown symbol) — every `Instrument` carries a
+  `source: "live" | "simulated"` field so the UI can show which one it got
+  (`components/ui/Badge.tsx`'s `DataSourceBadge`, used on the instrument detail page, search
+  results, and opportunity cards). `lib/mock/opportunities.ts` and `getGeneralMarketNews()` /
+  `getNewsForSymbols()` in `lib/mock/news.ts` follow the same live-with-mock-fallback pattern.
+  Because instruments/opportunities/news now depend on `fetch`, **all of
+  `getAllInstruments`/`getInstrument`/`searchInstruments`,
+  `getAllOpportunities`/`getOpportunitiesForRiskProfile`/`getOpportunityForSymbol`, and
+  `getGeneralMarketNews`/`getNewsForSymbols` are async** — every caller (dashboard, instrument
+  detail page, search page, chat engine, portfolio price enrichment in `lib/db.ts`) awaits them.
+  Market indices (`lib/mock/market.ts`, DAX/MDAX/S&P 500/Nasdaq 100) stay fully mock — index-level
+  quotes require a paid Finnhub/Twelve Data plan.
 - **Supabase** (`lib/supabase.ts`, `lib/db.ts`, `lib/database.types.ts`) — the only real
   persistent store, holding `app_users` (Clerk user id → risk profile, WhatsApp number, depot/
   onboarding status) and `portfolio_positions` (manually-entered positions; a `source` column
@@ -138,6 +160,10 @@ prose (tool-calling against the app's own data, not free-form number generation)
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — from a Supabase project's API settings; schema in
   `supabase/schema.sql`. Without these, `lib/supabase.ts` throws at first use (landing/marketing
   pages still work; anything behind `(main)` or `/onboarding` does not).
+- `FINNHUB_API_KEY`, `TWELVE_DATA_API_KEY` — enable live quotes/news (Finnhub) and historical
+  charts (Twelve Data) for the symbols listed in `lib/market-data/symbols.ts`. Without these, every
+  instrument silently falls back to `lib/mock`'s generated data — nothing throws, no code branches
+  needed at the call site.
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `_SIGN_UP_URL` / `_SIGN_IN_FALLBACK_REDIRECT_URL` /
   `_SIGN_UP_FALLBACK_REDIRECT_URL` — already set to point at the custom `/sign-in`, `/sign-up`
   pages and route new sign-ups into `/onboarding/whatsapp`.

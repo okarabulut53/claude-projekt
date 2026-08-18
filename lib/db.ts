@@ -116,6 +116,16 @@ export async function markOnboardingCompleted(userId: string) {
 }
 
 export async function getPortfolioPositions(userId: string): Promise<PortfolioPosition[]> {
+  const positions = await getRawPortfolioPositions(userId);
+  return Promise.all(
+    positions.map(async (position) => {
+      const instrument = await getInstrument(position.symbol);
+      return { ...position, currentPrice: instrument?.price ?? position.avgPrice };
+    }),
+  );
+}
+
+async function getRawPortfolioPositions(userId: string): Promise<PortfolioPosition[]> {
   if (!isSupabaseConfigured()) return mockGetPortfolioPositions(userId);
 
   const supabase = getSupabaseAdmin();
@@ -127,21 +137,18 @@ export async function getPortfolioPositions(userId: string): Promise<PortfolioPo
 
   if (error) throw error;
 
-  return (data as PortfolioPositionRow[]).map((row) => {
-    const instrument = getInstrument(row.symbol);
-    return {
-      id: row.id,
-      userId: row.user_id,
-      symbol: row.symbol,
-      name: row.name,
-      assetClass: row.asset_class,
-      quantity: Number(row.quantity),
-      avgPrice: Number(row.avg_price),
-      currentPrice: instrument?.price ?? Number(row.avg_price),
-      source: row.source,
-      createdAt: row.created_at,
-    };
-  });
+  return (data as PortfolioPositionRow[]).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    symbol: row.symbol,
+    name: row.name,
+    assetClass: row.asset_class,
+    quantity: Number(row.quantity),
+    avgPrice: Number(row.avg_price),
+    currentPrice: Number(row.avg_price),
+    source: row.source,
+    createdAt: row.created_at,
+  }));
 }
 
 export async function addPortfolioPosition(params: {

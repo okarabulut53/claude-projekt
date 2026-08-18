@@ -116,41 +116,37 @@ const seeds: OpportunitySeed[] = [
   },
 ];
 
-let cache: InvestmentOpportunity[] | null = null;
-
-export function getAllOpportunities(): InvestmentOpportunity[] {
-  if (cache) return cache;
-  cache = seeds
-    .map((seed, index) => {
-      const instrument = getInstrument(seed.symbol);
-      if (!instrument) return null;
-      const entryLow = instrument.price * (1 - seed.entrySpread);
-      const entryHigh = instrument.price * (1 + seed.entrySpread * 0.4);
-      const opportunity: InvestmentOpportunity = {
-        id: `opp-${seed.symbol.toLowerCase()}`,
-        instrument,
-        aiScore: seed.aiScore,
-        riskLevel: seed.riskLevel,
-        potentialEntryLow: Math.round(entryLow * 100) / 100,
-        potentialEntryHigh: Math.round(entryHigh * 100) / 100,
-        holdingPeriod: seed.holdingPeriod,
-        reasoning: seed.reasoning,
-        risks: seed.risks,
-        assessment: seed.assessment,
-        generatedAt: hoursAgo(index * 2 + 1),
-      };
-      return opportunity;
-    })
-    .filter((o): o is InvestmentOpportunity => o !== null);
-  return cache;
+async function buildOpportunity(seed: OpportunitySeed, index: number): Promise<InvestmentOpportunity | null> {
+  const instrument = await getInstrument(seed.symbol);
+  if (!instrument) return null;
+  const entryLow = instrument.price * (1 - seed.entrySpread);
+  const entryHigh = instrument.price * (1 + seed.entrySpread * 0.4);
+  return {
+    id: `opp-${seed.symbol.toLowerCase()}`,
+    instrument,
+    aiScore: seed.aiScore,
+    riskLevel: seed.riskLevel,
+    potentialEntryLow: Math.round(entryLow * 100) / 100,
+    potentialEntryHigh: Math.round(entryHigh * 100) / 100,
+    holdingPeriod: seed.holdingPeriod,
+    reasoning: seed.reasoning,
+    risks: seed.risks,
+    assessment: seed.assessment,
+    generatedAt: hoursAgo(index * 2 + 1),
+  };
 }
 
-export function getOpportunitiesForRiskProfile(riskProfile: RiskProfile): InvestmentOpportunity[] {
-  return getAllOpportunities()
-    .filter((o) => o.riskLevel === riskProfile)
-    .sort((a, b) => b.aiScore - a.aiScore);
+export async function getAllOpportunities(): Promise<InvestmentOpportunity[]> {
+  const built = await Promise.all(seeds.map((seed, index) => buildOpportunity(seed, index)));
+  return built.filter((o): o is InvestmentOpportunity => o !== null);
 }
 
-export function getOpportunityForSymbol(symbol: string): InvestmentOpportunity | undefined {
-  return getAllOpportunities().find((o) => o.instrument.symbol.toLowerCase() === symbol.toLowerCase());
+export async function getOpportunitiesForRiskProfile(riskProfile: RiskProfile): Promise<InvestmentOpportunity[]> {
+  const all = await getAllOpportunities();
+  return all.filter((o) => o.riskLevel === riskProfile).sort((a, b) => b.aiScore - a.aiScore);
+}
+
+export async function getOpportunityForSymbol(symbol: string): Promise<InvestmentOpportunity | undefined> {
+  const all = await getAllOpportunities();
+  return all.find((o) => o.instrument.symbol.toLowerCase() === symbol.toLowerCase());
 }

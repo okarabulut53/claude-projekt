@@ -1,5 +1,9 @@
 import { Instrument } from "@/lib/types";
 import { generateHistory } from "./random";
+import { cached } from "@/lib/market-data/cache";
+import { fetchFinnhubQuote, isFinnhubConfigured } from "@/lib/market-data/finnhub";
+import { fetchTwelveDataHistory } from "@/lib/market-data/twelvedata";
+import { liveSymbols } from "@/lib/market-data/symbols";
 
 interface InstrumentSeed {
   symbol: string;
@@ -33,44 +37,76 @@ const volatilityFactor: Record<Instrument["volatility"], number> = {
   hoch: 0.045,
 };
 
-function buildInstrument(seed: InstrumentSeed): Instrument {
+function changeFromHistory(history: { price: number }[], latest: number, daysBack: number) {
+  const reference = history[Math.max(history.length - 1 - daysBack, 0)]?.price ?? latest;
+  return reference > 0 ? ((latest - reference) / reference) * 100 : 0;
+}
+
+function buildMockInstrument(seed: InstrumentSeed): Instrument {
   const history = generateHistory(seed.symbol, 90, seed.price * 0.9, volatilityFactor[seed.volatility]);
   const latest = history[history.length - 1].price;
-  const prev1d = history[history.length - 2]?.price ?? latest;
-  const prev30d = history[Math.max(history.length - 31, 0)].price;
   return {
     symbol: seed.symbol,
     name: seed.name,
     assetClass: seed.assetClass,
     currency: seed.currency,
     price: latest,
-    changePercent1d: ((latest - prev1d) / prev1d) * 100,
-    changePercent30d: ((latest - prev30d) / prev30d) * 100,
+    changePercent1d: changeFromHistory(history, latest, 1),
+    changePercent30d: changeFromHistory(history, latest, 30),
     volatility: seed.volatility,
     history,
+    source: "simulated",
   };
 }
 
-const instrumentCache = new Map<string, Instrument>();
+async function buildLiveInstrument(seed: InstrumentSeed): Promise<Instrument | null> {
+  const map = liveSymbols[seed.symbol];
+  if (!map || !isFinnhubConfigured()) return null;
 
-export function getAllInstruments(): Instrument[] {
-  return seeds.map((seed) => {
-    const cached = instrumentCache.get(seed.symbol);
-    if (cached) return cached;
-    const instrument = buildInstrument(seed);
-    instrumentCache.set(seed.symbol, instrument);
-    return instrument;
-  });
+  const quote = await cached(`quote:${seed.symbol}`, 60_000, () => fetchFinnhubQuote(map.finnhub));
+  if (!quote) return null;
+
+  const history = await cached(`history:${seed.symbol}`, 6 * 3600_000, () =>
+    fetchTwelveDataHistory(map.twelveData, 90),
+  );
+
+  const finalHistory =
+    history && history.length > 5
+      ? history
+      : generateHistory(seed.symbol, 90, quote.price * 0.9, volatilityFactor[seed.volatility]).map((p, i, arr) =>
+          i === arr.length - 1 ? { ...p, price: quote.price } : p,
+        );
+
+  return {
+    symbol: seed.symbol,
+    name: seed.name,
+    assetClass: seed.assetClass,
+    currency: map.currency,
+    price: quote.price,
+    changePercent1d: quote.changePercent1d,
+    changePercent30d: changeFromHistory(finalHistory, quote.price, 30),
+    volatility: seed.volatility,
+    history: finalHistory,
+    source: "live",
+  };
 }
 
-export function getInstrument(symbol: string): Instrument | undefined {
-  return getAllInstruments().find((i) => i.symbol.toLowerCase() === symbol.toLowerCase());
+async function buildInstrument(seed: InstrumentSeed): Promise<Instrument> {
+  return (await buildLiveInstrument(seed)) ?? buildMockInstrument(seed);
 }
 
-export function searchInstruments(query: string): Instrument[] {
+export async function getAllInstruments(): Promise<Instrument[]> {
+  return Promise.all(seeds.map((seed) => cached(`instrument:${seed.symbol}`, 60_000, () => buildInstrument(seed))));
+}
+
+export async function getInstrument(symbol: string): Promise<Instrument | undefined> {
+  const instruments = await getAllInstruments();
+  return instruments.find((i) => i.symbol.toLowerCase() === symbol.toLowerCase());
+}
+
+export async function searchInstruments(query: string): Promise<Instrument[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  return getAllInstruments().filter(
-    (i) => i.symbol.toLowerCase().includes(q) || i.name.toLowerCase().includes(q),
-  );
+  const instruments = await getAllInstruments();
+  return instruments.filter((i) => i.symbol.toLowerCase().includes(q) || i.name.toLowerCase().includes(q));
 }

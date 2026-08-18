@@ -1,7 +1,7 @@
 import { requireAppUser } from "@/lib/current-user";
 import { getPortfolioPositions } from "@/lib/db";
 import { getMarketIndices } from "@/lib/mock/market";
-import { mockNews } from "@/lib/mock/news";
+import { getGeneralMarketNews } from "@/lib/mock/news";
 import { getOpportunitiesForRiskProfile } from "@/lib/mock/opportunities";
 import { MarketOverview } from "@/components/dashboard/MarketOverview";
 import { NewsFeed } from "@/components/dashboard/NewsFeed";
@@ -14,11 +14,12 @@ export async function Dashboardsite() {
   const appUser = await requireAppUser();
   const riskProfile = appUser.riskProfile!;
 
-  const [positions, indices] = await Promise.all([
+  const [positions, indices, opportunities, news] = await Promise.all([
     getPortfolioPositions(appUser.id),
     Promise.resolve(getMarketIndices()),
+    getOpportunitiesForRiskProfile(riskProfile),
+    getGeneralMarketNews(),
   ]);
-  const opportunities = getOpportunitiesForRiskProfile(riskProfile);
   const portfolioSymbols = positions.map((p) => p.symbol);
 
   return (
@@ -56,7 +57,7 @@ export async function Dashboardsite() {
         </div>
       </div>
 
-      <NewsFeed news={mockNews} relevantSymbols={portfolioSymbols} />
+      <NewsFeed news={news} relevantSymbols={portfolioSymbols} />
 
       <DisclaimerNote />
     </div>

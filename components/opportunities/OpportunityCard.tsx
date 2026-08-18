@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { InvestmentOpportunity } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
-import { RiskBadge, ScoreBadge } from "@/components/ui/Badge";
+import { DataSourceBadge, RiskBadge, ScoreBadge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/format";
 
 export function OpportunityCard({ opportunity }: { opportunity: InvestmentOpportunity }) {
@@ -18,9 +18,10 @@ export function OpportunityCard({ opportunity }: { opportunity: InvestmentOpport
           </div>
           <ScoreBadge score={opportunity.aiScore} />
         </div>
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <RiskBadge level={opportunity.riskLevel} />
           <span className="text-xs text-foreground/50">Haltedauer: {opportunity.holdingPeriod}</span>
+          <DataSourceBadge source={instrument.source} />
         </div>
         <p className="mt-3 text-sm leading-relaxed text-foreground/70">{opportunity.reasoning}</p>
         <div className="mt-3 rounded-lg bg-brand-surface p-3">

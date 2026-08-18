@@ -1,13 +1,7 @@
 import { AppUser, AssetClass, PortfolioPosition, RiskProfile } from "@/lib/types";
-import { getInstrument } from "@/lib/mock/instruments";
 
 const users = new Map<string, AppUser>();
 const positions = new Map<string, PortfolioPosition[]>();
-
-function withCurrentPrice(position: PortfolioPosition): PortfolioPosition {
-  const instrument = getInstrument(position.symbol);
-  return { ...position, currentPrice: instrument?.price ?? position.avgPrice };
-}
 
 export function mockGetOrCreateAppUser(userId: string, email: string | null): AppUser {
   const existing = users.get(userId);
@@ -47,7 +41,7 @@ export function mockMarkOnboardingCompleted(userId: string) {
 }
 
 export function mockGetPortfolioPositions(userId: string): PortfolioPosition[] {
-  return (positions.get(userId) ?? []).map(withCurrentPrice);
+  return positions.get(userId) ?? [];
 }
 
 export function mockAddPortfolioPosition(params: {

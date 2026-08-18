@@ -41,3 +41,20 @@ export function ChangeBadge({ value }: { value: number }) {
     </span>
   );
 }
+
+export function DataSourceBadge({ source }: { source: "live" | "simulated" }) {
+  if (source === "live") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-risk-low-bg px-2.5 py-1 text-[11px] font-semibold text-risk-low">
+        <span className="h-1.5 w-1.5 rounded-full bg-risk-low" />
+        Live-Kurs
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-surface px-2.5 py-1 text-[11px] font-semibold text-foreground/50">
+      <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
+      Simulationsdaten
+    </span>
+  );
+}

@@ -1,0 +1,89 @@
+FINARAAI — STAND NACH ANSCHLUSSFRAGEN-/FEHLENDER-TICKER-KORREKTUR
+===========================================================================================
+Datum: 20.08.2026
+Zweck dieser Datei: Checkliste zum manuellen Nachprüfen im Chat. Nach jedem geprüften Punkt
+einfach abhaken / Notiz ergänzen. Automatisierte Tests laufen bereits grün (siehe unten),
+das ersetzt aber nicht den echten Blick auf die Chat-Antworten mit einem echten CLAUDE_CHATBOT_API_KEY.
+Ersetzt die vorherige Checkliste (Stand FMP-Erweiterung) — deren Punkte sind inzwischen in
+CHATBOT_ANALYSE.md als erledigt dokumentiert, nicht hier nochmal aufgeführt.
+
+
+1) HEUTE UMGESETZT — BITTE IM CHAT GEGENPRÜFEN
+------------------------------------------------
+
+[ ] Anschlussfrage zu einem Ranking-Instrument liefert eine Karte, keinen Fließtext
+    Datei: lib/finara-ai/client.ts (buildSystemPrompt, Regel "Strukturierte Ausgabe ist
+    verpflichtend, auch bei Anschlussfragen")
+    Test-Ablauf:
+      1. "Gib mir einen Aktien-Vorschlag" → present_ranking-Karte mit z. B. MSFT/SAP/NVDA
+      2. "wieso MSFT?" (oder das Symbol, das oben am höchsten steht)
+    Erwartung: Schritt 2 liefert eine present_score_analysis-Karte (Indikator-Tabelle) für genau
+    dieses eine Instrument — KEIN langer Fließtext-Absatz mit RSI/ADX/SMA/News-Sentiment als Text.
+    Gegenprobe mit anderer Formulierung: "warum steht MSFT so hoch?", "was macht den Score von
+    MSFT aus?" — sollten dasselbe Verhalten zeigen.
+
+[ ] Score-/Analyse-Anfrage ohne erkennbaren Ticker löst eine echte Rückfrage aus
+    Datei: lib/finara-ai/client.ts (buildSystemPrompt, Regel "Fehlender Ticker bei
+    Analyse-/Score-Anfrage")
+    Test-Prompt: "analysiere mit score" (kein Tickername, keine vorherige Instrument-Erwähnung
+    im selben Gespräch)
+    Erwartung: Bot fragt konkret nach, z. B. "Für welches Instrument möchtest du eine
+    Score-Analyse? (z. B. SAP, MSFT, NVDA)" — NICHT die generische Formulierung "Dazu liegen mir
+    aktuell keine verlässlichen Daten vor. Frag mich gern nach ...". Kein Tool-Aufruf in diesem
+    Schritt (an der Netzwerk-/Ladezeit erkennbar — die Rückfrage kommt schneller als eine
+    Analyse mit vorherigem Tool-Call).
+
+[ ] chat-engine.ts (regelbasierter Fallback) bleibt bei gültigem API-Key aus dem Spiel
+    Kein direkt beobachtbares UI-Verhalten, sondern eine Kontrollfrage für den Fall, dass die
+    generische "keine verlässlichen Daten"-Formulierung doch nochmal auftaucht: dann NICHT von
+    einem Prompt-/Routing-Fehler ausgehen, sondern zuerst im Server-Terminal (wo `npm run dev`
+    läuft) nach der Zeile "[FinaraAI] Anthropic call failed, ..." suchen. Diese Formulierung kann
+    laut Code nur aus zwei Stellen kommen: fehlender CLAUDE_CHATBOT_API_KEY (aktuell in
+    .env.local gesetzt, also nicht die Ursache) oder eine im try-Block geworfene Exception
+    (Netzwerk, ungültiger/abgelaufener Key, Rate-Limit von Anthropic selbst). Das Server-Log
+    zeigt den echten Fehler.
+
+[ ] Neue automatisierte Tests
+    Datei: lib/finara-ai/client.test.ts
+    Neu: 4 Prompt-Guardrail-Tests (beide neuen Regeln textlich abgesichert) + 3 Verhaltens-Tests
+    in describe("generateFinaraReply follow-up and missing-ticker routing", ...), die den
+    Anthropic-SDK-Client direkt mocken (vi.mock("@anthropic-ai/sdk")) und die echte
+    generateFinaraReply()-Routing-Logik prüfen — nicht nur den Prompt-Text.
+    Status: npx vitest run → 170/170 Tests grün, npx tsc --noEmit → keine Fehler.
+
+
+2) BEWUSST NICHT UMGESETZT (Rückfrage beantwortet, nicht vergessen)
+------------------------------------------------------------------
+[x] Kein Tool-Ergebnis-Gedächtnis zwischen Chat-Turns eingeführt, um die Anschlussfrage zu lösen
+    — bewusst weiterhin so gebaut: get_analysis wird bei einer "wieso X?"-Rückfrage ERNEUT
+    aufgerufen statt sich auf die Zahlen aus dem vorherigen get_ranking-Aufruf zu verlassen
+    (gleiche Begründung wie bei der bereits bestehenden "Nachfragen"-Regel: frühere
+    Tool-Ergebnisse werden nicht zwischen Turns gespeichert, sich auf eigene frühere Aussagen zu
+    verlassen ist genauso riskant wie eine Zahl zu erfinden).
+
+
+3) NOCH OFFEN — NICHT TEIL DIESER RUNDE, ABER IN CHATBOT_ANALYSE.MD PRIORISIERT
+------------------------------------------------------------------------------------------
+[ ] Verhaltens-Tests (wie der neue Anthropic-SDK-Mock-Block) auf weitere Anfragetypen ausweiten
+    (SWOT, Bullen/Bären, Markttrend, News, Export) statt nur Prompt-Guardrails.
+[ ] Rechtliche Prüfung des sichtbaren Scores.
+[ ] Score-/Sektor-Integration in Dashboard/Watchlist/Portfolio-Seiten.
+[ ] Entscheidung: höherer FMP-Tarif oder Zweitanbieter für breitere Fundamentaldaten-Abdeckung.
+
+Details und Priorisierung: siehe CHATBOT_ANALYSE.md, Abschnitt "Was als Nächstes gebraucht wird".
+
+
+4) BEKANNTE EINSCHRÄNKUNGEN DIESER ÄNDERUNG (technisch, zum Im-Hinterkopf-Behalten)
+------------------------------------------------------------------------------------------
+- Die beiden neuen Prompt-Regeln sind Text im System-Prompt, kein Code-Zwang — sie steuern das
+  Modellverhalten, garantieren es aber nicht mit letzter Sicherheit. Die neuen Verhaltens-Tests
+  in client.test.ts prüfen deshalb nur den Code-Pfad bei einer gemockten Modell-Antwort (dass ein
+  present_score_analysis-Tool-Call korrekt zur Karte wird, dass ein reiner Text-Response nicht
+  in den chat-engine.ts-Fallback verwandelt wird) — nicht, dass ein echtes Claude-Modell in jedem
+  Fall exakt so reagiert. Der Chat-Test unter Punkt 1 oben bleibt deshalb der eigentliche Beweis.
+- Die "Fehlender Ticker"-Regel greift nur, wenn der Gesprächsverlauf selbst keinen eindeutigen
+  Bezugspunkt hergibt (siehe die bestehende "Umgang mit kurzen/mehrdeutigen Anschlussfragen"-
+  Regel, auf die explizit verwiesen wird). Bei "analysiere mit score" direkt nach einer Analyse
+  zu einem konkreten Instrument im selben Gespräch darf der Bot dieses Instrument weiterhin
+  annehmen, statt trotzdem nachzufragen — das ist kein Bug, sondern Priorität 2 der
+  Anschlussfragen-Logik.

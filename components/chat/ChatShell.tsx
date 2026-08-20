@@ -1,8 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChatFolder, ChatThread, Instrument, WatchlistItem } from "@/lib/types";
-import { createFolder, listChatThreads, moveThreadToFolder } from "@/lib/actions/chat-threads";
+import {
+  createFolder,
+  listChatThreads,
+  moveThreadDownAction,
+  moveThreadToFolder,
+  removeChatFolder,
+  removeChatThread,
+  renameThread,
+  setThreadPinnedState,
+  setThreadUnreadState,
+} from "@/lib/actions/chat-threads";
 import { ChatThreadSidebar } from "@/components/chat/ChatThreadSidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ChatChartPanel } from "@/components/chat/ChatChartPanel";
@@ -44,9 +55,17 @@ export function ChatShell({
   initialFolders: ChatFolder[];
   watchlist: WatchlistItem[];
 }) {
+  const searchParams = useSearchParams();
   const [threads, setThreads] = useState(initialThreads);
   const [folders, setFolders] = useState(initialFolders);
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(initialThreads[0]?.id ?? null);
+  // Supports "In neuem Tab öffnen" from the chat context menu (/finaraai?thread=<id>) — falls
+  // back to the most recent thread when there's no ?thread= param or it doesn't match a thread
+  // this user actually has.
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(() => {
+    const requested = searchParams.get("thread");
+    if (requested && initialThreads.some((t) => t.id === requested)) return requested;
+    return initialThreads[0]?.id ?? null;
+  });
   const [chartSymbol, setChartSymbol] = useState<string | null>(watchlist[0]?.symbol ?? "SAP");
   const [chartInstrument, setChartInstrument] = useState<Instrument | null>(null);
   const { layout, update, resizeWidth } = useChatLayout();
@@ -79,16 +98,78 @@ export function ChatShell({
     await moveThreadToFolder(threadId, folderId);
   }
 
+  async function handleDeleteThread(threadId: string) {
+    setThreads((prev) => prev.filter((t) => t.id !== threadId));
+    if (activeThreadId === threadId) setActiveThreadId(null);
+    await removeChatThread(threadId);
+  }
+
+  async function handleDeleteFolder(folderId: string) {
+    setFolders((prev) => prev.filter((f) => f.id !== folderId));
+    // Mirrors the DB's on-delete-set-null behavior (supabase/schema.sql): threads move back to
+    // "kein Ordner" instead of being deleted along with the folder.
+    setThreads((prev) => prev.map((t) => (t.folderId === folderId ? { ...t, folderId: null } : t)));
+    await removeChatFolder(folderId);
+  }
+
+  function handleSelectThreadFromSidebar(threadId: string) {
+    setActiveThreadId(threadId);
+    const thread = threads.find((t) => t.id === threadId);
+    if (thread?.unread) {
+      setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, unread: false } : t)));
+      setThreadUnreadState(threadId, false);
+    }
+  }
+
+  async function handleTogglePin(threadId: string) {
+    const thread = threads.find((t) => t.id === threadId);
+    if (!thread) return;
+    const nextPinned = !thread.pinned;
+    setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, pinned: nextPinned } : t)));
+    await setThreadPinnedState(threadId, nextPinned);
+  }
+
+  async function handleMarkUnread(threadId: string) {
+    setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, unread: true } : t)));
+    await setThreadUnreadState(threadId, true);
+  }
+
+  async function handleRenameThread(threadId: string, title: string) {
+    setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, title } : t)));
+    await renameThread(threadId, title);
+  }
+
+  // sortOrder swaps happen server-side (lib/db.ts's moveThreadDown reads both neighbors' current
+  // values) — a client-side optimistic guess would need to know the neighbor's sortOrder too, so
+  // this just re-fetches the authoritative order instead.
+  async function handleMoveThreadDown(threadId: string) {
+    await moveThreadDownAction(threadId);
+    await refreshThreads();
+  }
+
+  async function handleCreateFolderAndMoveThread(threadId: string, name: string) {
+    const folder = await createFolder(name);
+    setFolders((prev) => [...prev, folder]);
+    await handleMoveThread(threadId, folder.id);
+  }
+
   return (
     <div className="flex h-full w-full overflow-hidden">
       <ChatThreadSidebar
         threads={threads}
         folders={folders}
         activeThreadId={activeThreadId}
-        onSelectThread={setActiveThreadId}
+        onSelectThread={handleSelectThreadFromSidebar}
         onNewChat={() => setActiveThreadId(null)}
         onCreateFolder={handleCreateFolder}
         onMoveThread={handleMoveThread}
+        onDeleteThread={handleDeleteThread}
+        onDeleteFolder={handleDeleteFolder}
+        onTogglePin={handleTogglePin}
+        onMarkUnread={handleMarkUnread}
+        onRenameThread={handleRenameThread}
+        onMoveThreadDown={handleMoveThreadDown}
+        onCreateFolderAndMoveThread={handleCreateFolderAndMoveThread}
         width={layout.threadSidebarWidth}
         collapsed={layout.threadSidebarCollapsed}
         onExpand={() => update({ threadSidebarCollapsed: false })}

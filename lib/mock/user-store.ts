@@ -52,7 +52,20 @@ const users = new Map<string, AppUser>(initial.users);
 const positions = new Map<string, PortfolioPosition[]>(initial.positions);
 const watchlist = new Map<string, WatchlistItem[]>(initial.watchlist);
 const chatFolders = new Map<string, ChatFolder[]>(initial.chatFolders);
-const chatThreads = new Map<string, ChatThread[]>(initial.chatThreads);
+// Backfills pinned/unread/sortOrder for threads persisted before those fields existed (older
+// .data/mock-store.json files) — sortOrder falls back to -updatedAt so pre-existing chats keep
+// the same newest-first order they had under the old updated-at-desc sort.
+const chatThreads = new Map<string, ChatThread[]>(
+  initial.chatThreads.map(([userId, threads]) => [
+    userId,
+    threads.map((t) => ({
+      ...t,
+      pinned: t.pinned ?? false,
+      unread: t.unread ?? false,
+      sortOrder: t.sortOrder ?? -Date.parse(t.updatedAt),
+    })),
+  ]),
+);
 const chatMessages = new Map<string, ChatMessage[]>(initial.chatMessages);
 
 function persist() {
@@ -212,8 +225,26 @@ export function mockCreateChatFolder(userId: string, name: string): ChatFolder {
   return folder;
 }
 
+/** Mirrors supabase/schema.sql's `chat_threads.folder_id references chat_folders(id) on delete
+ *  set null` — deleting a folder un-assigns its threads back to "kein Ordner" rather than
+ *  deleting the conversations inside it. */
+export function mockDeleteChatFolder(userId: string, folderId: string) {
+  chatFolders.set(
+    userId,
+    (chatFolders.get(userId) ?? []).filter((f) => f.id !== folderId),
+  );
+  for (const thread of chatThreads.get(userId) ?? []) {
+    if (thread.folderId === folderId) thread.folderId = null;
+  }
+  persist();
+}
+
+/** Pinned first, then sortOrder ascending within each group — mirrors lib/db.ts's Supabase
+ *  `.order("pinned", ...).order("sort_order", ...)` query. */
 export function mockGetChatThreads(userId: string): ChatThread[] {
-  return (chatThreads.get(userId) ?? []).slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return (chatThreads.get(userId) ?? [])
+    .slice()
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || a.sortOrder - b.sortOrder);
 }
 
 export function mockGetChatThread(userId: string, threadId: string): ChatThread | undefined {
@@ -227,6 +258,9 @@ export function mockCreateChatThread(userId: string, folderId: string | null, ti
     userId,
     folderId,
     title,
+    pinned: false,
+    unread: false,
+    sortOrder: -Date.now(),
     createdAt: now,
     updatedAt: now,
   };
@@ -249,6 +283,35 @@ export function mockMoveChatThread(userId: string, threadId: string, folderId: s
   const thread = (chatThreads.get(userId) ?? []).find((t) => t.id === threadId);
   if (!thread) return;
   thread.folderId = folderId;
+  persist();
+}
+
+export function mockSetThreadPinned(userId: string, threadId: string, pinned: boolean) {
+  const thread = (chatThreads.get(userId) ?? []).find((t) => t.id === threadId);
+  if (!thread) return;
+  thread.pinned = pinned;
+  persist();
+}
+
+export function mockSetThreadUnread(userId: string, threadId: string, unread: boolean) {
+  const thread = (chatThreads.get(userId) ?? []).find((t) => t.id === threadId);
+  if (!thread) return;
+  thread.unread = unread;
+  persist();
+}
+
+/** Title-only — deliberately doesn't touch updatedAt, see lib/db.ts's renameChatThread. */
+export function mockRenameChatThread(userId: string, threadId: string, title: string) {
+  const thread = (chatThreads.get(userId) ?? []).find((t) => t.id === threadId);
+  if (!thread) return;
+  thread.title = title;
+  persist();
+}
+
+export function mockSetThreadSortOrder(userId: string, threadId: string, sortOrder: number) {
+  const thread = (chatThreads.get(userId) ?? []).find((t) => t.id === threadId);
+  if (!thread) return;
+  thread.sortOrder = sortOrder;
   persist();
 }
 

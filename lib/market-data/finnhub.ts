@@ -81,6 +81,46 @@ export async function fetchFinnhubGeneralNews(): Promise<RawNewsItem[]> {
   }
 }
 
+export interface FinnhubRecommendationCounts {
+  strongBuy: number;
+  buy: number;
+  hold: number;
+  sell: number;
+  strongSell: number;
+}
+
+interface FinnhubRecommendationRow {
+  period: string;
+  strongBuy: number;
+  buy: number;
+  hold: number;
+  sell: number;
+  strongSell: number;
+}
+
+/** Analyst recommendation trends (free tier). Stocks only — Finnhub has no equivalent endpoint
+ *  for crypto pairs, so this legitimately returns null for BTC/ETH/SOL etc. */
+export async function fetchFinnhubRecommendationTrends(symbol: string): Promise<FinnhubRecommendationCounts | null> {
+  if (!FINNHUB_KEY) return null;
+  try {
+    const res = await fetch(`${BASE}/stock/recommendation?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`);
+    if (!res.ok) return null;
+    const data: FinnhubRecommendationRow[] = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return null;
+    // Rows are returned newest-period-first.
+    const latest = data[0];
+    return {
+      strongBuy: latest.strongBuy ?? 0,
+      buy: latest.buy ?? 0,
+      hold: latest.hold ?? 0,
+      sell: latest.sell ?? 0,
+      strongSell: latest.strongSell ?? 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** News for one specific symbol (last 7 days). */
 export async function fetchFinnhubCompanyNews(symbol: string): Promise<RawNewsItem[]> {
   if (!FINNHUB_KEY) return [];

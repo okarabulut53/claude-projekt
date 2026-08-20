@@ -1,8 +1,8 @@
-import { Instrument } from "@/lib/types";
+import { Instrument, PricePoint } from "@/lib/types";
 import { generateHistory } from "./random";
 import { cached } from "@/lib/market-data/cache";
 import { fetchFinnhubQuote, isFinnhubConfigured } from "@/lib/market-data/finnhub";
-import { fetchTwelveDataHistory } from "@/lib/market-data/twelvedata";
+import { fetchTwelveDataHistory, fetchTwelveDataOhlcv } from "@/lib/market-data/twelvedata";
 import { liveSymbols } from "@/lib/market-data/symbols";
 
 interface InstrumentSeed {
@@ -59,6 +59,28 @@ function buildMockInstrument(seed: InstrumentSeed): Instrument {
   };
 }
 
+/** Best-effort daily volume, keyed by "yyyy-mm-dd", from Twelve Data's OHLCV endpoint (the
+ *  close-only fetchTwelveDataHistory above discards volume entirely). Returns null on any
+ *  failure — callers must treat that as "volume unavailable for this call", not retry inline. */
+async function fetchLiveVolumeByDate(seedSymbol: string, twelveDataSymbol: string): Promise<Map<string, number> | null> {
+  const result = await cached(`ohlcv:${seedSymbol}`, 6 * 3600_000, () => fetchTwelveDataOhlcv(twelveDataSymbol, "1day", 90));
+  if (!result.ok) return null;
+  const byDate = new Map<string, number>();
+  for (const bar of result.bars) {
+    const volume = Number(bar.volume);
+    if (Number.isFinite(volume)) byDate.set(bar.datetime.slice(0, 10), volume);
+  }
+  return byDate;
+}
+
+function withVolume(history: PricePoint[], volumeByDate: Map<string, number> | null): PricePoint[] {
+  if (!volumeByDate) return history;
+  return history.map((p) => {
+    const volume = volumeByDate.get(p.date.slice(0, 10));
+    return volume !== undefined ? { ...p, volume } : p;
+  });
+}
+
 async function buildLiveInstrument(seed: InstrumentSeed): Promise<Instrument | null> {
   const map = liveSymbols[seed.symbol];
   if (!map || !isFinnhubConfigured()) return null;
@@ -77,6 +99,9 @@ async function buildLiveInstrument(seed: InstrumentSeed): Promise<Instrument | n
           i === arr.length - 1 ? { ...p, price: quote.price } : p,
         );
 
+  const volumeByDate = await fetchLiveVolumeByDate(seed.symbol, map.twelveData);
+  const historyWithVolume = withVolume(finalHistory, volumeByDate);
+
   return {
     symbol: seed.symbol,
     name: seed.name,
@@ -86,7 +111,7 @@ async function buildLiveInstrument(seed: InstrumentSeed): Promise<Instrument | n
     changePercent1d: quote.changePercent1d,
     changePercent30d: changeFromHistory(finalHistory, quote.price, 30),
     volatility: seed.volatility,
-    history: finalHistory,
+    history: historyWithVolume,
     source: "live",
   };
 }

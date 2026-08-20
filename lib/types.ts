@@ -11,6 +11,10 @@ export type HoldingPeriod =
 export interface PricePoint {
   date: string;
   price: number;
+  /** Trading volume for this bar, when known. Undefined (not 0) when no volume data was
+   *  available for this point — lib/analysis/volume.ts treats undefined as "unavailable", not
+   *  as a real zero-volume day. */
+  volume?: number;
 }
 
 export interface Instrument {
@@ -99,8 +103,18 @@ export interface ChatFolder {
 export interface ChatThread {
   id: string;
   userId: string;
+  /** Also doubles as the "Projekt"-Zuordnung in the context menu's "Zum Projekt hinzufügen" —
+   *  finara already has exactly this concept (a named group a thread can belong to) as
+   *  ChatFolder, so the context menu reuses it under the "Projekt" label instead of introducing a
+   *  second, parallel grouping entity. */
   folderId: string | null;
   title: string;
+  pinned: boolean;
+  unread: boolean;
+  /** Manual list position (lower = earlier). Newly created threads get a very negative value
+   *  (derived from -Date.now()) so they sort first by default, matching the previous
+   *  updated-at-desc ordering; "Nach unten verschieben" swaps this value with the next thread's. */
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }

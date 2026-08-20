@@ -5,17 +5,102 @@ import { sendChatMessage } from "@/lib/actions/chat";
 import { getThreadHistory } from "@/lib/actions/chat-threads";
 import { ChatMessage, Instrument } from "@/lib/types";
 import { renderChartImage } from "@/lib/chart-image";
+import { isChartContextRelevant } from "@/lib/chat/chartRelevance";
 import { DisclaimerNote } from "@/components/ui/DisclaimerNote";
 import { ChatBubbleIcon } from "@/components/icons/Icons";
 import { MarketAnalysisCard, parseMarketAnalysis } from "@/components/chat/MarketAnalysisCard";
+import { ScoreAnalysisCard, parseScoreAnalysis } from "@/components/chat/ScoreAnalysisCard";
+import { RankingCard, parseRanking } from "@/components/chat/RankingCard";
+import { SwotAnalysisCard, parseSwotAnalysis } from "@/components/chat/SwotAnalysisCard";
+import { BullBearAnalysisCard, parseBullBearAnalysis } from "@/components/chat/BullBearAnalysisCard";
+import { MarketOverviewCard, parseMarketOverview } from "@/components/chat/MarketOverviewCard";
+import { NewsSummaryCard, parseNewsSummary } from "@/components/chat/NewsSummaryCard";
+import { WatchlistOverviewCard, parseWatchlistOverview } from "@/components/chat/WatchlistOverviewCard";
+import { FundamentalsCard, parseFundamentalsAnalysis } from "@/components/chat/FundamentalsCard";
+import { ExportReadyCard, parseExportReady } from "@/components/chat/ExportReadyCard";
+import { ShortTermComparisonCard, parseShortTermComparison } from "@/components/chat/ShortTermComparisonCard";
+import { DaytradingScreenerCard, parseDaytradingScreener } from "@/components/chat/DaytradingScreenerCard";
+import { StockReportCard, parseStockReport } from "@/components/chat/StockReportCard";
+import { parseSuggestedFollowUp } from "@/components/chat/structuredMessage";
+import { PromptTemplatePicker } from "@/components/chat/PromptTemplatePicker";
+import { ChevronDownIcon, LayoutGridIcon } from "@/components/icons/Icons";
 
-const categoryChips = [
-  { label: "Aktienauswahl & -analyse", prompt: "Wie sieht NVIDIA aktuell aus?" },
-  { label: "Markttrends", prompt: "Was sind aktuell interessante Investment Opportunities?" },
-  { label: "Watchlist-Einblicke", prompt: "Gibt es Neuigkeiten zu meiner Watchlist?" },
-  { label: "Portfolio-Check", prompt: "Wie hoch ist mein Guthaben?" },
-  { label: "Glossar", prompt: "Was ist ein ETF?" },
-];
+/** Cycling generic progress label shown while waiting for a reply — the real per-turn steps
+ *  (tool calls actually made) are only known once the reply lands, so this is purely decorative
+ *  (see StepsDropdown below for the real, post-completion steps). */
+const LOADING_LABELS = ["Denkt nach…", "Daten werden abgerufen…", "Analyse wird vorbereitet…", "Fast fertig…"];
+
+/** Session-only, collapsed-by-default list of the real tool-call steps taken for one assistant
+ *  reply. Not persisted (steps aren't part of ChatMessage/the DB schema) — a reload of the thread
+ *  loses them, by product decision (real steps shown after completion, no live streaming, no
+ *  DB persistence). */
+function StepsDropdown({ steps }: { steps: string[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 text-xs text-foreground/40 hover:text-foreground/70"
+      >
+        <ChevronDownIcon className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+        {open ? "Schritte ausblenden" : `Schritte anzeigen (${steps.length})`}
+      </button>
+      {open && (
+        <ol className="mt-1.5 space-y-1 border-l border-brand-border pl-3 text-xs text-foreground/50">
+          {steps.map((step, i) => (
+            <li key={i}>{step}</li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+/** Tries each present_*-tool's parser in order and renders the matching card — every structured
+ *  chat reply funnels through here instead of a chain of if/else per type at the call site. */
+function renderStructuredChatContent(content: string) {
+  const marketAnalysis = parseMarketAnalysis(content);
+  if (marketAnalysis) return <MarketAnalysisCard analysis={marketAnalysis} />;
+
+  const scoreAnalysis = parseScoreAnalysis(content);
+  if (scoreAnalysis) return <ScoreAnalysisCard analysis={scoreAnalysis} />;
+
+  const ranking = parseRanking(content);
+  if (ranking) return <RankingCard ranking={ranking} />;
+
+  const swot = parseSwotAnalysis(content);
+  if (swot) return <SwotAnalysisCard analysis={swot} />;
+
+  const bullBear = parseBullBearAnalysis(content);
+  if (bullBear) return <BullBearAnalysisCard analysis={bullBear} />;
+
+  const marketOverview = parseMarketOverview(content);
+  if (marketOverview) return <MarketOverviewCard overview={marketOverview} />;
+
+  const newsSummary = parseNewsSummary(content);
+  if (newsSummary) return <NewsSummaryCard summary={newsSummary} />;
+
+  const watchlistOverview = parseWatchlistOverview(content);
+  if (watchlistOverview) return <WatchlistOverviewCard overview={watchlistOverview} />;
+
+  const fundamentalsAnalysis = parseFundamentalsAnalysis(content);
+  if (fundamentalsAnalysis) return <FundamentalsCard analysis={fundamentalsAnalysis} />;
+
+  const exportReady = parseExportReady(content);
+  if (exportReady) return <ExportReadyCard file={exportReady} />;
+
+  const shortTermComparison = parseShortTermComparison(content);
+  if (shortTermComparison) return <ShortTermComparisonCard comparison={shortTermComparison} />;
+
+  const daytradingScreener = parseDaytradingScreener(content);
+  if (daytradingScreener) return <DaytradingScreenerCard screener={daytradingScreener} />;
+
+  const stockReport = parseStockReport(content);
+  if (stockReport) return <StockReportCard report={stockReport} />;
+
+  return null;
+}
 
 export function ChatPanel({
   threadId,
@@ -31,7 +116,21 @@ export function ChatPanel({
   const [loadedThreadId, setLoadedThreadId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingLabelIndex, setLoadingLabelIndex] = useState(0);
+  const [stepsByMessageId, setStepsByMessageId] = useState<Record<string, string[]>>({});
+  const [showTemplates, setShowTemplates] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => setLoadingLabelIndex((i) => (i + 1) % LOADING_LABELS.length), 1400);
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  function insertTemplate(text: string) {
+    setInput(text);
+    setShowTemplates(false);
+  }
 
   if (threadId !== prevThreadId) {
     setPrevThreadId(threadId);
@@ -65,17 +164,27 @@ export function ChatPanel({
       { id: `local-${Date.now()}`, threadId: threadId ?? "", role: "user", content: text, createdAt: new Date().toISOString() },
     ]);
     setInput("");
+    setLoadingLabelIndex(0);
     setLoading(true);
     try {
-      const chartImage = chartInstrument
-        ? renderChartImage(chartInstrument.history, chartInstrument.changePercent1d >= 0)
+      const chartRelevant =
+        chartInstrument !== null && isChartContextRelevant(text, chartInstrument.symbol, chartInstrument.name);
+      const chartImage = chartRelevant
+        ? renderChartImage(chartInstrument!.history, chartInstrument!.changePercent1d >= 0)
         : null;
       const chartAttachment = chartImage ? { ...chartImage, symbol: chartInstrument!.symbol } : null;
-      const { reply, threadId: resolvedThreadId } = await sendChatMessage(text, threadId, chartAttachment);
-      setMessages((prev) => [
-        ...prev,
-        { id: `local-${Date.now()}-r`, threadId: resolvedThreadId, role: "assistant", content: reply, createdAt: new Date().toISOString() },
-      ]);
+      const { reply, steps, threadId: resolvedThreadId } = await sendChatMessage(text, threadId, chartAttachment);
+      // replyId is captured from inside the updater (rather than a separate `const` computed via
+      // Date.now() beforehand) so the same id can be reused for the steps-lookup below without
+      // tripping the react-hooks/purity lint rule on a bare impure call in the component body.
+      let replyId = "";
+      setMessages((prev) => {
+        replyId = `local-${Date.now()}-r`;
+        return [...prev, { id: replyId, threadId: resolvedThreadId, role: "assistant", content: reply, createdAt: new Date().toISOString() }];
+      });
+      if (steps.length > 0) {
+        setStepsByMessageId((prev) => ({ ...prev, [replyId]: steps }));
+      }
       setLoadedThreadId(resolvedThreadId);
       onThreadUpdate(resolvedThreadId, isNewThread);
     } catch {
@@ -110,24 +219,16 @@ export function ChatPanel({
             <h1 className="mb-5 text-base font-bold text-foreground">
               Was darf&apos;s sein — Charts, Trends oder Börsenideen?
             </h1>
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
-              {categoryChips.map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => send(chip.prompt)}
-                  className="rounded-full border border-brand-border px-2.5 py-1 text-[11px] font-medium text-foreground/70 hover:border-brand-teal hover:text-foreground"
-                >
-                  {chip.label}
-                </button>
-              ))}
+            <div className="mx-auto max-w-md text-left">
+              <PromptTemplatePicker onInsert={insertTemplate} />
             </div>
           </div>
         ) : (
           <div className="space-y-4 px-4 py-4">
             {loadingHistory && <p className="text-sm text-foreground/40">Lade Chatverlauf…</p>}
             {messages.map((message) => {
-              const analysis = message.role === "assistant" ? parseMarketAnalysis(message.content) : null;
+              const structured = message.role === "assistant" ? renderStructuredChatContent(message.content) : null;
+              const followUp = structured && message.role === "assistant" ? parseSuggestedFollowUp(message.content) : null;
               return (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
@@ -138,24 +239,41 @@ export function ChatPanel({
                         <ChatBubbleIcon className="h-3.5 w-3.5" />
                       </span>
                     )}
-                    {analysis ? (
-                      <MarketAnalysisCard analysis={analysis} />
-                    ) : (
-                      <div
-                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                          message.role === "user" ? "bg-brand-navy text-white" : "bg-brand-surface text-foreground"
-                        }`}
-                      >
-                        {message.content}
-                      </div>
-                    )}
+                    <div className="min-w-0">
+                      {structured ? (
+                        structured
+                      ) : (
+                        <div
+                          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                            message.role === "user" ? "bg-brand-navy text-white" : "bg-brand-surface text-foreground"
+                          }`}
+                        >
+                          {message.content}
+                        </div>
+                      )}
+                      {message.role === "assistant" && stepsByMessageId[message.id]?.length > 0 && (
+                        <StepsDropdown steps={stepsByMessageId[message.id]} />
+                      )}
+                      {followUp && (
+                        <button
+                          type="button"
+                          onClick={() => send(followUp)}
+                          disabled={loading}
+                          className="mt-2 rounded-full border border-brand-teal px-3 py-1.5 text-xs font-medium text-brand-teal hover:bg-brand-teal-light disabled:opacity-50"
+                        >
+                          {followUp}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
             {loading && (
               <div className="flex justify-start">
-                <div className="rounded-2xl bg-brand-surface px-4 py-2.5 text-sm text-foreground/50">Tippt…</div>
+                <div className="rounded-2xl bg-brand-surface px-4 py-2.5 text-sm text-foreground/50">
+                  {LOADING_LABELS[loadingLabelIndex]}
+                </div>
               </div>
             )}
             <div ref={bottomRef} />
@@ -164,7 +282,23 @@ export function ChatPanel({
       </div>
 
       <div className="border-t border-brand-border p-4">
+        {showTemplates && (
+          <div className="mb-3">
+            <PromptTemplatePicker onInsert={insertTemplate} />
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowTemplates((v) => !v)}
+            aria-label="Vorlagen"
+            title="Vorlagen"
+            className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border ${
+              showTemplates ? "border-brand-teal text-brand-teal" : "border-brand-border text-foreground/60"
+            } hover:border-brand-teal hover:text-brand-teal`}
+          >
+            <LayoutGridIcon className="h-4 w-4" />
+          </button>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}

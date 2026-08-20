@@ -22,7 +22,7 @@ export async function sendChatMessage(
   message: string,
   threadId: string | null,
   chartAttachment?: ChartAttachment | null,
-): Promise<{ reply: string; threadId: string }> {
+): Promise<{ reply: string; steps: string[]; threadId: string }> {
   const userId = await requireUserId();
   const user = await currentUser();
   const appUser = await getOrCreateAppUser(userId, user?.primaryEmailAddress?.emailAddress ?? null);
@@ -37,9 +37,9 @@ export async function sendChatMessage(
   const history = await getThreadMessages(thread.id);
 
   await appendChatMessage(thread.id, "user", message);
-  const reply = await generateFinaraReply(message, appUser, positions, history, chartAttachment);
+  const { reply, steps } = await generateFinaraReply(message, appUser, positions, history, chartAttachment);
   await appendChatMessage(thread.id, "assistant", reply);
   await touchChatThread(userId, thread.id, isNewThread ? deriveTitle(message) : undefined);
 
-  return { reply, threadId: thread.id };
+  return { reply, steps, threadId: thread.id };
 }

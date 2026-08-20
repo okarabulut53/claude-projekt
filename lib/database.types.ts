@@ -90,6 +90,9 @@ export interface Database {
           user_id: string;
           folder_id: string | null;
           title: string;
+          pinned: boolean;
+          unread: boolean;
+          sort_order: number;
           created_at: string;
           updated_at: string;
         };
@@ -98,6 +101,9 @@ export interface Database {
           user_id: string;
           folder_id?: string | null;
           title?: string;
+          pinned?: boolean;
+          unread?: boolean;
+          sort_order?: number;
         };
         Update: Partial<Database["public"]["Tables"]["chat_threads"]["Insert"]> & {
           updated_at?: string;

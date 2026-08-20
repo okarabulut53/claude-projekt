@@ -1,4 +1,5 @@
 import { PricePoint } from "@/lib/types";
+import { markTwelveDataRateLimited, runTwelveDataRateLimited } from "./rateLimitQueue";
 
 const TD_KEY = process.env.TWELVE_DATA_API_KEY;
 const BASE = "https://api.twelvedata.com";
@@ -48,11 +49,14 @@ export async function fetchTwelveDataOhlcv(
 ): Promise<TwelveDataOhlcvResult> {
   if (!TD_KEY) return { ok: false, reason: "unconfigured" };
   try {
-    const res = await fetch(
-      `${BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=${TD_KEY}`,
+    const res = await runTwelveDataRateLimited(() =>
+      fetch(`${BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=${TD_KEY}`),
     );
     const data: OhlcvTimeSeriesResponse = await res.json();
-    if (res.status === 429 || data.code === 429) return { ok: false, reason: "rate_limit" };
+    if (res.status === 429 || data.code === 429) {
+      markTwelveDataRateLimited();
+      return { ok: false, reason: "rate_limit" };
+    }
     if (data.status === "error" || !Array.isArray(data.values) || data.values.length === 0) {
       return { ok: false, reason: "not_found" };
     }
@@ -89,9 +93,13 @@ export async function fetchTwelveDataOhlcvOrThrow(
 export async function fetchTwelveDataHistory(symbol: string, days = 90): Promise<PricePoint[] | null> {
   if (!TD_KEY) return null;
   try {
-    const res = await fetch(
-      `${BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=${days}&apikey=${TD_KEY}`,
+    const res = await runTwelveDataRateLimited(() =>
+      fetch(`${BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=${days}&apikey=${TD_KEY}`),
     );
+    if (res.status === 429) {
+      markTwelveDataRateLimited();
+      return null;
+    }
     if (!res.ok) return null;
     const data: TimeSeriesResponse = await res.json();
     if (data.status === "error" || !Array.isArray(data.values) || data.values.length === 0) return null;

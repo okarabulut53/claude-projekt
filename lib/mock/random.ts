@@ -24,7 +24,12 @@ export function generateHistory(
   volatility: number,
 ) {
   const random = seededRandom(seedText);
-  const points: { date: string; price: number }[] = [];
+  // Separate seeded stream (not interleaved with the price draws above) so adding volume can't
+  // shift the existing deterministic price series — volume.ts's simulated-instrument factor is
+  // additive, not a change to prices already relied on elsewhere.
+  const volumeRandom = seededRandom(`${seedText}:volume`);
+  const baseVolume = 500_000 + volumeRandom() * 4_500_000;
+  const points: { date: string; price: number; volume: number }[] = [];
   let price = startPrice;
   const today = new Date();
   for (let i = days - 1; i >= 0; i--) {
@@ -32,7 +37,12 @@ export function generateHistory(
     date.setDate(date.getDate() - i);
     const drift = (random() - 0.48) * volatility;
     price = Math.max(price * (1 + drift), 0.01);
-    points.push({ date: date.toISOString(), price: Math.round(price * 100) / 100 });
+    const volumeNoise = 0.6 + volumeRandom() * 0.8;
+    points.push({
+      date: date.toISOString(),
+      price: Math.round(price * 100) / 100,
+      volume: Math.round(baseVolume * volumeNoise),
+    });
   }
   return points;
 }

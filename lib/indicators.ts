@@ -180,6 +180,82 @@ export function vwap(data: CandleDatum[]): IndicatorPoint[] {
   return points;
 }
 
+export interface AdxResult {
+  adx: IndicatorPoint[];
+  plusDI: IndicatorPoint[];
+  minusDI: IndicatorPoint[];
+}
+
+/**
+ * Wilder's ADX (period, default 14), plus the +DI/-DI lines it's built from. ADX alone only
+ * measures trend STRENGTH (0-100, higher = stronger trend, <20 roughly "no trend"), not
+ * direction — callers that need a directional read (e.g. the technical score) compare +DI vs.
+ * -DI: +DI > -DI means the strong trend (if any) is bullish, -DI > +DI means bearish.
+ */
+export function adx(data: CandleDatum[], period = 14): AdxResult {
+  if (data.length <= period * 2) return { adx: [], plusDI: [], minusDI: [] };
+
+  const trueRanges: number[] = [];
+  const plusDMs: number[] = [];
+  const minusDMs: number[] = [];
+  for (let i = 1; i < data.length; i++) {
+    const cur = data[i];
+    const prev = data[i - 1];
+    trueRanges.push(Math.max(cur.high - cur.low, Math.abs(cur.high - prev.close), Math.abs(cur.low - prev.close)));
+
+    const upMove = cur.high - prev.high;
+    const downMove = prev.low - cur.low;
+    plusDMs.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    minusDMs.push(downMove > upMove && downMove > 0 ? downMove : 0);
+  }
+
+  // Wilder smoothing: seed with the sum of the first `period` values, then recursively smooth.
+  const wilderSmooth = (values: number[]): number[] => {
+    if (values.length <= period) return [];
+    const out: number[] = [];
+    let smoothed = values.slice(0, period).reduce((sum, v) => sum + v, 0);
+    out.push(smoothed);
+    for (let i = period; i < values.length; i++) {
+      smoothed = smoothed - smoothed / period + values[i];
+      out.push(smoothed);
+    }
+    return out;
+  };
+
+  const smoothedTR = wilderSmooth(trueRanges);
+  const smoothedPlusDM = wilderSmooth(plusDMs);
+  const smoothedMinusDM = wilderSmooth(minusDMs);
+  // trueRanges[k] (k=0..) corresponds to data[k+1] (built from the data[i-1]->data[i] step).
+  // wilderSmooth's output index j corresponds to input index (period-1+j), i.e.
+  // trueRanges[period-1+j], i.e. data[period+j].
+  const timeForSmoothedIndex = (j: number) => data[period + j].time;
+
+  const plusDI: IndicatorPoint[] = [];
+  const minusDI: IndicatorPoint[] = [];
+  const dx: number[] = [];
+  for (let j = 0; j < smoothedTR.length; j++) {
+    const tr = smoothedTR[j];
+    const pDI = tr > 0 ? (smoothedPlusDM[j] / tr) * 100 : 0;
+    const mDI = tr > 0 ? (smoothedMinusDM[j] / tr) * 100 : 0;
+    plusDI.push({ time: timeForSmoothedIndex(j), value: pDI });
+    minusDI.push({ time: timeForSmoothedIndex(j), value: mDI });
+    const diSum = pDI + mDI;
+    dx.push(diSum > 0 ? (Math.abs(pDI - mDI) / diSum) * 100 : 0);
+  }
+
+  const adxPoints: IndicatorPoint[] = [];
+  if (dx.length > period) {
+    let avg = dx.slice(0, period).reduce((sum, v) => sum + v, 0) / period;
+    adxPoints.push({ time: timeForSmoothedIndex(period - 1), value: avg });
+    for (let j = period; j < dx.length; j++) {
+      avg = (avg * (period - 1) + dx[j]) / period;
+      adxPoints.push({ time: timeForSmoothedIndex(j), value: avg });
+    }
+  }
+
+  return { adx: adxPoints, plusDI, minusDI };
+}
+
 /** Wilder's Average True Range (period, default 14) — a volatility measure. */
 export function atr(data: CandleDatum[], period = 14): IndicatorPoint[] {
   if (data.length <= period) return [];

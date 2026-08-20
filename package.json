@@ -6,14 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
     "@clerk/nextjs": "^7.7.6",
     "@supabase/supabase-js": "^2.112.3",
+    "docx": "^9.7.1",
     "lightweight-charts": "^4.2.3",
     "next": "16.3.1",
+    "pptxgenjs": "^4.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "^3.6.0"
@@ -26,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

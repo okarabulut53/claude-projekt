@@ -279,6 +279,58 @@ export function TrendLineIcon(props: IconProps) {
   );
 }
 
+export function PinIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M9 4h6l-.5 6.5L18 13v2h-5.5V21l-.5 1-.5-1v-6H6v-2l3.5-2.5L9 4Z" />
+    </svg>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 20l1-4.5L15.5 5 19 8.5 8.5 19 4 20Z" />
+      <path d="M13.5 6.5 17.5 10.5" />
+    </svg>
+  );
+}
+
+export function ExternalLinkIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M9 6H5.5A1.5 1.5 0 0 0 4 7.5v11A1.5 1.5 0 0 0 5.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" />
+      <path d="M14 4h6v6M20 4 11 13" />
+    </svg>
+  );
+}
+
+export function ArrowDownIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 4v14M6 13l6 6 6-6" />
+    </svg>
+  );
+}
+
+export function MoreHorizontalIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
 export function CoinsIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>
